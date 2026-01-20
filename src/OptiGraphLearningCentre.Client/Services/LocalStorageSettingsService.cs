@@ -12,7 +12,7 @@ public class LocalStorageSettingsService : ISettingsService
     private readonly ILocalStorageService _localStorage;
     private GraphSettings? _cachedSettings;
 
-    public event Action? OnSettingsChanged;
+    public event Action<GraphSettings>? OnSettingsChanged;
 
     public LocalStorageSettingsService(ILocalStorageService localStorage)
     {
@@ -42,13 +42,13 @@ public class LocalStorageSettingsService : ISettingsService
     {
         _cachedSettings = settings;
         await _localStorage.SetItemAsync(SettingsKey, settings);
-        OnSettingsChanged?.Invoke();
+        OnSettingsChanged?.Invoke(settings);
     }
 
     public async Task ClearSettingsAsync()
     {
         _cachedSettings = null;
         await _localStorage.RemoveItemAsync(SettingsKey);
-        OnSettingsChanged?.Invoke();
+        OnSettingsChanged?.Invoke(new GraphSettings());
     }
 }

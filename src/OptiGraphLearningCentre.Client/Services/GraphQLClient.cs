@@ -42,7 +42,7 @@ public class GraphQLClient : IGraphQLClient
         var settings = await _settingsService.GetSettingsAsync();
         var stopwatch = Stopwatch.StartNew();
 
-        var httpRequest = new HttpRequestMessage(HttpMethod.Post, settings.Endpoint);
+        var httpRequest = new HttpRequestMessage(HttpMethod.Post, new Uri(settings.Endpoint));
         var requestBody = JsonSerializer.Serialize(request, JsonOptions);
         httpRequest.Content = new StringContent(requestBody, Encoding.UTF8, "application/json");
 
@@ -76,6 +76,23 @@ public class GraphQLClient : IGraphQLClient
             {
                 _logger.LogWarning("GraphQL request failed with status {StatusCode}: {Body}",
                     response.StatusCode, responseBody);
+
+                // Try to parse GraphQL errors from response body
+                if (!string.IsNullOrWhiteSpace(responseBody))
+                {
+                    try
+                    {
+                        var errorResponse = JsonSerializer.Deserialize<GraphQLResponse<JsonElement>>(responseBody, JsonOptions);
+                        if (errorResponse?.Errors?.Any() == true)
+                        {
+                            return errorResponse;
+                        }
+                    }
+                    catch
+                    {
+                        // Response isn't valid GraphQL error format, fall through to generic error
+                    }
+                }
 
                 return new GraphQLResponse<JsonElement>
                 {

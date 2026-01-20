@@ -3,13 +3,14 @@
 @inject ISchemaService SchemaService
 @inject IGraphQLClient GraphQLClient
 @inject QueryState QueryState
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Query Builder - Optimizely Graph Learning Centre</PageTitle>
 
 <div class="max-w-7xl mx-auto">
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">Visual Query Builder</h1>
-        <p class="text-gray-600 mt-1">Build GraphQL queries visually and see the results in real-time</p>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Visual Query Builder</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-1">Build GraphQL queries visually and see the results in real-time</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -19,14 +20,39 @@
             <Card Title="Content Type">
                 <ChildContent>
                 <div class="space-y-4">
-                    <div>
+                    <div class="relative">
                         <label class="label">Content Type Name</label>
-                        <input type="text" class="input" @bind="QueryState.CurrentDefinition.ContentType"
-                               @bind:event="oninput" @bind:after="UpdatePreview"
-                               placeholder="e.g., BlogPost, StandardPage, Content" />
-                        <p class="text-sm text-gray-500 mt-1">
-                            Enter the name of the content type to query
-                        </p>
+                        <input type="text" class="input" @bind="_contentTypeSearch"
+                               @bind:event="oninput" @bind:after="OnContentTypeSearchChanged"
+                               @onfocus="() => _showContentTypeDropdown = true"
+                               @onblur="OnContentTypeBlur"
+                               placeholder="@(_isLoadingTypes ? "Loading types..." : "Search content types...")"
+                               disabled="@_isLoadingTypes" />
+                        @if (_showContentTypeDropdown && _filteredContentTypes.Any())
+                        {
+                            <div class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-40 overflow-y-auto scrollbar-visible">
+                                @foreach (var type in _filteredContentTypes)
+                                {
+                                    <button type="button"
+                                            class="w-full px-3 py-1.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 @(type == QueryState.CurrentDefinition.ContentType ? "bg-opti-blue/10 text-opti-blue" : "text-gray-700 dark:text-gray-200")"
+                                            @onmousedown="() => SelectContentType(type)">
+                                        @type
+                                    </button>
+                                }
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(QueryState.CurrentDefinition.ContentType))
+                        {
+                            <p class="text-sm text-opti-blue mt-1">
+                                Selected: <strong>@QueryState.CurrentDefinition.ContentType</strong>
+                            </p>
+                        }
+                        else if (!_isLoadingTypes && !_availableContentTypes.Any())
+                        {
+                            <p class="text-sm text-amber-600 dark:text-amber-400 mt-1">
+                                Could not load types. Check your connection settings.
+                            </p>
+                        }
                     </div>
 
                     <div>
@@ -54,9 +80,9 @@
                         <div class="flex flex-wrap gap-2 mt-3">
                             @foreach (var field in QueryState.CurrentDefinition.SelectedFields)
                             {
-                                <span class="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 rounded text-sm">
+                                <span class="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm text-gray-700 dark:text-gray-200">
                                     @field
-                                    <button @onclick="() => RemoveField(field)" class="text-gray-400 hover:text-red-500">
+                                    <button @onclick="() => RemoveField(field)" class="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                         </svg>
@@ -67,7 +93,7 @@
                     }
                     else
                     {
-                        <p class="text-sm text-gray-500 mt-2">
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
                             No fields selected. Default metadata fields will be returned.
                         </p>
                     }
@@ -81,9 +107,13 @@
                 @foreach (var filter in QueryState.CurrentDefinition.Filters)
                 {
                     <div class="flex gap-2 mb-2 items-start">
-                        <input type="text" class="input flex-1" @bind="filter.Field"
-                               @bind:event="oninput" @bind:after="UpdatePreview"
-                               placeholder="Field" />
+                        <select class="select flex-1" @bind="filter.Field" @bind:after="UpdatePreview">
+                            <option value="">Select field...</option>
+                            @foreach (var field in QueryState.CurrentDefinition.SelectedFields)
+                            {
+                                <option value="@field">@field</option>
+                            }
+                        </select>
                         <select class="select w-32" @bind="filter.Operator" @bind:after="UpdatePreview">
                             @foreach (FilterOperator op in Enum.GetValues<FilterOperator>())
                             {
@@ -93,7 +123,7 @@
                         <input type="text" class="input flex-1" @bind="filter.Value"
                                @bind:event="oninput" @bind:after="UpdatePreview"
                                placeholder="Value" />
-                        <button @onclick="() => RemoveFilter(filter)" class="btn-ghost p-2 text-red-500">
+                        <button @onclick="() => RemoveFilter(filter)" class="btn-ghost p-2 text-red-500 dark:text-red-400">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                             </svg>
@@ -115,14 +145,18 @@
                 @foreach (var sort in QueryState.CurrentDefinition.Sorts)
                 {
                     <div class="flex gap-2 mb-2">
-                        <input type="text" class="input flex-1" @bind="sort.Field"
-                               @bind:event="oninput" @bind:after="UpdatePreview"
-                               placeholder="Field" />
+                        <select class="select flex-1" @bind="sort.Field" @bind:after="UpdatePreview">
+                            <option value="">Select field...</option>
+                            @foreach (var field in QueryState.CurrentDefinition.SelectedFields)
+                            {
+                                <option value="@field">@field</option>
+                            }
+                        </select>
                         <select class="select w-24" @bind="sort.Direction" @bind:after="UpdatePreview">
                             <option value="@SortDirection.Asc">ASC</option>
                             <option value="@SortDirection.Desc">DESC</option>
                         </select>
-                        <button @onclick="() => RemoveSort(sort)" class="btn-ghost p-2 text-red-500">
+                        <button @onclick="() => RemoveSort(sort)" class="btn-ghost p-2 text-red-500 dark:text-red-400">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                             </svg>
@@ -208,12 +242,41 @@
                 }
                 else if (string.IsNullOrEmpty(QueryState.LastResponse))
                 {
-                    <p class="text-gray-500 italic py-8 text-center">
+                    <p class="text-gray-500 dark:text-gray-400 italic py-8 text-center">
                         Execute the query to see results
                     </p>
                 }
                 else
                 {
+                    @if (_lastErrors?.Count > 0)
+                    {
+                        <div class="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                            <h4 class="font-semibold text-red-700 dark:text-red-400 mb-2 flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                GraphQL Errors
+                            </h4>
+                            @foreach (var error in _lastErrors)
+                            {
+                                <div class="mb-2 last:mb-0">
+                                    <p class="text-red-600 dark:text-red-300 font-mono text-sm">@error.Message</p>
+                                    @if (error.Locations?.Count > 0)
+                                    {
+                                        <p class="text-red-500 dark:text-red-400 text-xs mt-1">
+                                            Location: @string.Join(", ", error.Locations.Select(l => $"Line {l.Line}, Column {l.Column}"))
+                                        </p>
+                                    }
+                                    @if (error.Path?.Count > 0)
+                                    {
+                                        <p class="text-red-500 dark:text-red-400 text-xs mt-1">
+                                            Path: @string.Join(" → ", error.Path)
+                                        </p>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
                     <JsonViewer Json="@QueryState.LastResponse" />
                 }
                 </ChildContent>
@@ -225,10 +288,78 @@
 @code {
     private string _generatedQuery = string.Empty;
     private string _newField = string.Empty;
+    private List<GraphQLError>? _lastErrors;
 
-    protected override void OnInitialized()
+    // Content type dropdown state
+    private List<string> _availableContentTypes = new();
+    private List<string> _filteredContentTypes = new();
+    private string _contentTypeSearch = string.Empty;
+    private bool _showContentTypeDropdown;
+    private bool _isLoadingTypes;
+
+    protected override async Task OnInitializedAsync()
     {
         UpdatePreview();
+        await LoadContentTypesAsync();
+    }
+
+    private async Task LoadContentTypesAsync()
+    {
+        _isLoadingTypes = true;
+        StateHasChanged();
+
+        try
+        {
+            _availableContentTypes = await SchemaService.GetQueryableTypeNamesAsync();
+            _filteredContentTypes = _availableContentTypes;
+
+            // If there's already a selected content type, populate the search field
+            if (!string.IsNullOrEmpty(QueryState.CurrentDefinition.ContentType))
+            {
+                _contentTypeSearch = QueryState.CurrentDefinition.ContentType;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to load content types: {ex.Message}");
+            _availableContentTypes = new List<string>();
+            _filteredContentTypes = new List<string>();
+        }
+        finally
+        {
+            _isLoadingTypes = false;
+        }
+    }
+
+    private void OnContentTypeSearchChanged()
+    {
+        _showContentTypeDropdown = true;
+
+        if (string.IsNullOrWhiteSpace(_contentTypeSearch))
+        {
+            _filteredContentTypes = _availableContentTypes;
+        }
+        else
+        {
+            _filteredContentTypes = _availableContentTypes
+                .Where(t => t.Contains(_contentTypeSearch, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+    }
+
+    private void SelectContentType(string contentType)
+    {
+        QueryState.CurrentDefinition.ContentType = contentType;
+        _contentTypeSearch = contentType;
+        _showContentTypeDropdown = false;
+        UpdatePreview();
+    }
+
+    private async Task OnContentTypeBlur()
+    {
+        // Small delay to allow mousedown on dropdown items to fire first
+        await Task.Delay(150);
+        _showContentTypeDropdown = false;
     }
 
     private void UpdatePreview()
@@ -283,6 +414,7 @@
     private async Task ExecuteQuery()
     {
         QueryState.IsExecuting = true;
+        _lastErrors = null;
         StateHasChanged();
 
         try
@@ -290,15 +422,42 @@
             var request = new GraphQLRequest { Query = _generatedQuery };
             var response = await GraphQLClient.ExecuteAsync(request);
 
-            QueryState.LastResponse = System.Text.Json.JsonSerializer.Serialize(
-                response,
-                new System.Text.Json.JsonSerializerOptions { WriteIndented = true }
-            );
+            _lastErrors = response.Errors;
+
+            // Use the raw response body from the client to preserve exact server response
+            var rawResponse = GraphQLClient.LastRequest?.ResponseBody;
+            if (!string.IsNullOrEmpty(rawResponse))
+            {
+                // Pretty print the raw JSON
+                try
+                {
+                    var jsonDoc = System.Text.Json.JsonDocument.Parse(rawResponse);
+                    QueryState.LastResponse = System.Text.Json.JsonSerializer.Serialize(
+                        jsonDoc,
+                        new System.Text.Json.JsonSerializerOptions { WriteIndented = true }
+                    );
+                }
+                catch
+                {
+                    QueryState.LastResponse = rawResponse;
+                }
+            }
+            else
+            {
+                QueryState.LastResponse = System.Text.Json.JsonSerializer.Serialize(
+                    response,
+                    new System.Text.Json.JsonSerializerOptions { WriteIndented = true }
+                );
+            }
 
             QueryState.AddToHistory(_generatedQuery, QueryState.LastResponse, !response.HasErrors);
         }
         catch (Exception ex)
         {
+            _lastErrors = new List<GraphQLError>
+            {
+                new GraphQLError { Message = ex.Message }
+            };
             QueryState.LastResponse = System.Text.Json.JsonSerializer.Serialize(
                 new { error = ex.Message },
                 new System.Text.Json.JsonSerializerOptions { WriteIndented = true }
@@ -312,6 +471,6 @@
 
     private async Task CopyQuery()
     {
-        // TODO: Implement clipboard copy via JS interop
+        await JSRuntime.InvokeVoidAsync("clipboardInterop.copyText", _generatedQuery);
     }
 }

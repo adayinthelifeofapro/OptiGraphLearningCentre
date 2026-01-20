@@ -44,6 +44,11 @@ public class GraphSettings
     /// Maximum number of history items to keep
     /// </summary>
     public int MaxHistoryItems { get; set; } = 50;
+
+    /// <summary>
+    /// Whether dark mode is enabled
+    /// </summary>
+    public bool IsDarkMode { get; set; } = false;
 }
 
 /// <summary>

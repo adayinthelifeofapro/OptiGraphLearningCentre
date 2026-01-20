@@ -7,8 +7,8 @@
 
 <div class="max-w-3xl mx-auto space-y-6">
     <div>
-        <h1 class="text-2xl font-bold text-gray-900">Settings</h1>
-        <p class="text-gray-600 mt-1">Configure your Optimizely Graph connection</p>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-1">Configure your Optimizely Graph connection</p>
     </div>
 
     <Card Title="Connection Settings">
@@ -19,7 +19,7 @@
                 <label class="label">Graph Endpoint</label>
                 <input type="url" class="input" @bind="_settings.Endpoint"
                        placeholder="https://cg.optimizely.com/content/v2" />
-                <p class="text-sm text-gray-500 mt-1">The Optimizely Graph API endpoint URL</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">The Optimizely Graph API endpoint URL</p>
             </div>
 
             <!-- Authentication Mode -->
@@ -39,7 +39,7 @@
                     <label class="label">Single Key</label>
                     <input type="password" class="input" @bind="_settings.SingleKey"
                            placeholder="Enter your single key" />
-                    <p class="text-sm text-gray-500 mt-1">Used for public content queries</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Used for public content queries</p>
                 </div>
             }
             else if (_settings.AuthMode == AuthenticationMode.Hmac)
@@ -56,7 +56,7 @@
                     <label class="label">Secret</label>
                     <input type="password" class="input" @bind="_settings.Secret"
                            placeholder="Enter your secret" />
-                    <p class="text-sm text-gray-500 mt-1">Used for HMAC authentication to access draft content</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Used for HMAC authentication to access draft content</p>
                 </div>
             }
 
@@ -65,7 +65,7 @@
                 <label class="label">Default Locale</label>
                 <input type="text" class="input" @bind="_settings.DefaultLocale"
                        placeholder="en" />
-                <p class="text-sm text-gray-500 mt-1">Default locale for queries (e.g., en, sv, de)</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Default locale for queries (e.g., en, sv, de)</p>
             </div>
         </div>
         </ChildContent>
@@ -131,12 +131,12 @@
         <div class="space-y-4">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="font-medium text-gray-900">Save Query History</p>
-                    <p class="text-sm text-gray-500">Store executed queries for quick access</p>
+                    <p class="font-medium text-gray-900 dark:text-gray-100">Save Query History</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Store executed queries for quick access</p>
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" class="sr-only peer" @bind="_settings.SaveQueryHistory" />
-                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-opti-blue"></div>
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:bg-gray-300 dark:after:border-gray-500 peer-checked:bg-opti-blue"></div>
                 </label>
             </div>
 
@@ -148,9 +148,26 @@
         </ChildContent>
     </Card>
 
+    <Card Title="Appearance">
+        <ChildContent>
+        <div class="space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="font-medium text-gray-900 dark:text-gray-100">Dark Mode</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Switch to a darker colour scheme</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" class="sr-only peer" @bind="_settings.IsDarkMode" @bind:after="SaveSettings" />
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:bg-gray-300 dark:after:border-gray-500 peer-checked:bg-opti-blue"></div>
+                </label>
+            </div>
+        </div>
+        </ChildContent>
+    </Card>
+
     <Card Title="About">
         <ChildContent>
-        <div class="prose text-gray-600">
+        <div class="prose text-gray-600 dark:text-gray-300">
             <p>
                 The Optimizely Graph Learning Centre helps you learn and master GraphQL queries
                 for Optimizely Graph. For documentation, visit:

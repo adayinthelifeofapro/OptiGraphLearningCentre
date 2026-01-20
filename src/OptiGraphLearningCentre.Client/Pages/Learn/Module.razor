@@ -15,8 +15,8 @@
 else if (_module == null)
 {
     <div class="text-center py-12">
-        <h2 class="text-xl font-semibold text-gray-900">Module not found</h2>
-        <p class="text-gray-600 mt-2">The requested module could not be found.</p>
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Module not found</h2>
+        <p class="text-gray-600 dark:text-gray-400 mt-2">The requested module could not be found.</p>
         <a href="/learn" class="btn-primary mt-4 inline-block">Back to Modules</a>
     </div>
 }
@@ -24,14 +24,14 @@ else
 {
     <div class="max-w-6xl mx-auto">
         <!-- Breadcrumb -->
-        <div class="flex items-center gap-2 text-sm text-gray-500 mb-4">
-            <a href="/learn" class="hover:text-opti-blue">Learning Centre</a>
+        <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-4">
+            <a href="/learn" class="hover:text-opti-blue dark:hover:text-blue-400">Learning Centre</a>
             <span>/</span>
-            <span class="text-gray-900">@_module.Title</span>
+            <span class="text-gray-900 dark:text-gray-100">@_module.Title</span>
             @if (_currentLesson != null)
             {
                 <span>/</span>
-                <span class="text-gray-900">@_currentLesson.Title</span>
+                <span class="text-gray-900 dark:text-gray-100">@_currentLesson.Title</span>
             }
         </div>
 
@@ -47,17 +47,17 @@ else
                             var isCompleted = _progress?.CompletedLessons.TryGetValue(lesson.Id, out var p) == true && p.IsCompleted;
 
                             <a href="@($"/learn/{_module.Id}/{lesson.Id}")"
-                               class="@(isActive ? "bg-opti-blue text-white" : "text-gray-600 hover:bg-gray-100") flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors">
+                               class="@(isActive ? "bg-opti-blue dark:bg-blue-600 text-white" : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700") flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors">
                                 <span class="flex items-start gap-2">
                                     @if (isCompleted)
                                     {
-                                        <svg class="w-4 h-4 mt-0.5 flex-shrink-0 @(isActive ? "text-white" : "text-green-500")" fill="currentColor" viewBox="0 0 20 20">
+                                        <svg class="w-4 h-4 mt-0.5 flex-shrink-0 @(isActive ? "text-white" : "text-green-500 dark:text-green-400")" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                         </svg>
                                     }
                                     else
                                     {
-                                        <span class="w-4 h-4 mt-0.5 flex-shrink-0 rounded-full border-2 @(isActive ? "border-white" : "border-gray-300")"></span>
+                                        <span class="w-4 h-4 mt-0.5 flex-shrink-0 rounded-full border-2 @(isActive ? "border-white" : "border-gray-300 dark:border-gray-500")"></span>
                                     }
                                     <span>@lesson.Title</span>
                                 </span>
@@ -75,17 +75,17 @@ else
                     <!-- Lesson Header -->
                     <Card>
                         <ChildContent>
-                        <h1 class="text-2xl font-bold text-gray-900 mb-2">@_currentLesson.Title</h1>
-                        <p class="text-gray-600">@_currentLesson.Summary</p>
+                        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">@_currentLesson.Title</h1>
+                        <p class="text-gray-600 dark:text-gray-400">@_currentLesson.Summary</p>
 
                         @if (_currentLesson.LearningObjectives.Any())
                         {
-                            <div class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
-                                <h3 class="text-sm font-semibold text-blue-800 mb-2">Learning Objectives</h3>
+                            <div class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-100 dark:border-blue-800">
+                                <h3 class="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">Learning Objectives</h3>
                                 <ul class="space-y-1">
                                     @foreach (var objective in _currentLesson.LearningObjectives)
                                     {
-                                        <li class="flex items-start gap-2 text-sm text-blue-700">
+                                        <li class="flex items-start gap-2 text-sm text-blue-700 dark:text-blue-300">
                                             <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                             </svg>
@@ -101,7 +101,7 @@ else
                     <!-- Lesson Content -->
                     <Card>
                         <ChildContent>
-                        <div class="prose max-w-none">
+                        <div class="prose dark:prose-invert max-w-none">
                             @((MarkupString)_currentLesson.Content)
                         </div>
                         </ChildContent>
@@ -112,7 +112,7 @@ else
                     {
                         <Card Title="@example.Title">
                             <ChildContent>
-                            <p class="text-gray-600 mb-4">@example.Description</p>
+                            <p class="text-gray-600 dark:text-gray-400 mb-4">@example.Description</p>
                             <TryItPanel Example="@example" />
                             </ChildContent>
                         </Card>
@@ -161,17 +161,17 @@ else
                     <!-- Module Overview -->
                     <Card>
                         <ChildContent>
-                        <h1 class="text-2xl font-bold text-gray-900 mb-2">@_module.Title</h1>
-                        <p class="text-gray-600 mb-4">@_module.Description</p>
+                        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">@_module.Title</h1>
+                        <p class="text-gray-600 dark:text-gray-400 mb-4">@_module.Description</p>
 
                         <div class="flex items-center gap-4">
                             <Badge Variant="@GetDifficultyBadge(_module.Difficulty)">
                                 @_module.Difficulty.ToString()
                             </Badge>
-                            <span class="text-sm text-gray-500">
+                            <span class="text-sm text-gray-500 dark:text-gray-400">
                                 @_module.Lessons.Count lessons
                             </span>
-                            <span class="text-sm text-gray-500">
+                            <span class="text-sm text-gray-500 dark:text-gray-400">
                                 ~@_module.EstimatedMinutes min
                             </span>
                         </div>

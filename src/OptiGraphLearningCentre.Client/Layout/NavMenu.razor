@@ -63,8 +63,8 @@
 </nav>
 
 @code {
-    private const string NavLinkClass = "nav-link flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 rounded-lg transition-colors duration-200 hover:bg-gray-100 hover:text-gray-900";
-    private const string ActiveClass = "nav-link-active bg-opti-blue text-white hover:bg-opti-blue hover:text-white";
+    private const string NavLinkClass = "nav-link flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 rounded-lg transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100";
+    private const string ActiveClass = "nav-link-active bg-opti-blue dark:bg-blue-600 text-white hover:bg-opti-blue dark:hover:bg-blue-600 hover:text-white";
 
     private List<LearningModule> _modules = new();
 

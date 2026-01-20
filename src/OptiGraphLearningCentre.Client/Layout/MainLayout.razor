@@ -1,9 +1,10 @@
 @inherits LayoutComponentBase
 @inject AppState AppState
+@inject ISettingsService SettingsService
 @inject NavigationManager Navigation
 @implements IDisposable
 
-<div class="min-h-screen bg-gray-50 flex flex-col">
+<div class="@RootClass">
     <!-- Top Navigation Bar -->
     <nav class="bg-opti-dark text-white shadow-lg flex-shrink-0 z-50">
         <div class="max-w-full mx-auto px-4">
@@ -28,6 +29,22 @@
                 </div>
 
                 <div class="flex items-center gap-4">
+                    <!-- Dark Mode Toggle -->
+                    <button @onclick="ToggleDarkMode" class="p-2 hover:bg-gray-700 rounded-lg transition-colors" title="@(_isDarkMode ? "Switch to light mode" : "Switch to dark mode")">
+                        @if (_isDarkMode)
+                        {
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                            </svg>
+                        }
+                        else
+                        {
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                            </svg>
+                        }
+                    </button>
+
                     <!-- Connection Status -->
                     <ConnectionIndicator Status="@AppState.ConnectionStatus" />
 
@@ -45,18 +62,18 @@
 
     <div class="flex flex-1 overflow-hidden">
         <!-- Sidebar -->
-        <aside class="@SidebarClass bg-white shadow-lg flex-shrink-0 overflow-y-auto transition-all duration-300 border-r border-gray-200">
+        <aside class="@SidebarClass bg-white dark:bg-gray-800 shadow-lg flex-shrink-0 overflow-y-auto transition-all duration-300 border-r border-gray-200 dark:border-gray-700">
             <NavMenu />
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 overflow-y-auto p-6">
+        <main class="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
             <!-- Global Messages -->
             @if (!string.IsNullOrEmpty(AppState.ErrorMessage))
             {
                 <div class="mb-4 alert-error flex items-center justify-between">
                     <span>@AppState.ErrorMessage</span>
-                    <button @onclick="() => AppState.ClearMessages()" class="text-red-600 hover:text-red-800">
+                    <button @onclick="() => AppState.ClearMessages()" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
@@ -67,7 +84,7 @@
             {
                 <div class="mb-4 alert-success flex items-center justify-between">
                     <span>@AppState.SuccessMessage</span>
-                    <button @onclick="() => AppState.ClearMessages()" class="text-green-600 hover:text-green-800">
+                    <button @onclick="() => AppState.ClearMessages()" class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
@@ -81,18 +98,36 @@
 </div>
 
 @code {
+    private bool _isDarkMode;
+
+    private string RootClass => _isDarkMode
+        ? "dark min-h-screen bg-gray-900 flex flex-col"
+        : "min-h-screen bg-gray-50 flex flex-col";
+
     private string SidebarClass => AppState.IsSidebarOpen
         ? "w-64"
         : "w-0 overflow-hidden";
+
+    protected override async Task OnInitializedAsync()
+    {
+        AppState.PropertyChanged += OnStateChanged;
+        SettingsService.OnSettingsChanged += OnSettingsChanged;
+
+        var settings = await SettingsService.GetSettingsAsync();
+        _isDarkMode = settings.IsDarkMode;
+    }
 
     private void ToggleSidebar()
     {
         AppState.ToggleSidebar();
     }
 
-    protected override void OnInitialized()
+    private async Task ToggleDarkMode()
     {
-        AppState.PropertyChanged += OnStateChanged;
+        _isDarkMode = !_isDarkMode;
+        var settings = await SettingsService.GetSettingsAsync();
+        settings.IsDarkMode = _isDarkMode;
+        await SettingsService.SaveSettingsAsync(settings);
     }
 
     private void OnStateChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -100,8 +135,15 @@
         InvokeAsync(StateHasChanged);
     }
 
+    private async void OnSettingsChanged(GraphSettings settings)
+    {
+        _isDarkMode = settings.IsDarkMode;
+        await InvokeAsync(StateHasChanged);
+    }
+
     public void Dispose()
     {
         AppState.PropertyChanged -= OnStateChanged;
+        SettingsService.OnSettingsChanged -= OnSettingsChanged;
     }
 }

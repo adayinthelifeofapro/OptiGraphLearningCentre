@@ -90,16 +90,17 @@ public class QueryBuilderService : IQueryBuilderService
     {
         var args = new List<string>();
 
-        // Locale
+        // Locale - format as array for Optimizely Graph
         if (!string.IsNullOrEmpty(definition.Locale))
         {
-            args.Add($"locale: {definition.Locale}");
+            args.Add($"locale: [{definition.Locale}]");
         }
 
-        // Where clause (filters)
-        if (definition.Filters.Count > 0)
+        // Where clause (filters) - only include filters with a field selected
+        var validFilters = definition.Filters.Where(f => !string.IsNullOrWhiteSpace(f.Field)).ToList();
+        if (validFilters.Count > 0)
         {
-            var whereClause = BuildWhereClause(definition.Filters);
+            var whereClause = BuildWhereClause(validFilters);
             args.Add($"where: {whereClause}");
         }
 
@@ -109,10 +110,11 @@ public class QueryBuilderService : IQueryBuilderService
             args.Add($"searchTerm: \"{EscapeString(definition.SearchTerm)}\"");
         }
 
-        // OrderBy
-        if (definition.Sorts.Count > 0)
+        // OrderBy - only include sorts with a field selected
+        var validSorts = definition.Sorts.Where(s => !string.IsNullOrWhiteSpace(s.Field)).ToList();
+        if (validSorts.Count > 0)
         {
-            var orderBy = BuildOrderByClause(definition.Sorts);
+            var orderBy = BuildOrderByClause(validSorts);
             args.Add($"orderBy: {orderBy}");
         }
 
@@ -177,7 +179,6 @@ public class QueryBuilderService : IQueryBuilderService
             FilterOperator.Eq => "eq",
             FilterOperator.NotEq => "notEq",
             FilterOperator.Like => "like",
-            FilterOperator.Contains => "contains",
             FilterOperator.Gt => "gt",
             FilterOperator.Gte => "gte",
             FilterOperator.Lt => "lt",
@@ -230,7 +231,7 @@ public class QueryBuilderService : IQueryBuilderService
     {
         var sortFields = sorts
             .OrderBy(s => s.Order)
-            .Select(s => $"{{ {s.Field}: {s.Direction.ToString().ToUpperInvariant()} }}");
+            .Select(s => $"{s.Field}: {s.Direction.ToString().ToUpperInvariant()}");
 
         return "{ " + string.Join(", ", sortFields) + " }";
     }

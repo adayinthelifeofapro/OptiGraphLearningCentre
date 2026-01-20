@@ -81,6 +81,12 @@ public class SchemaService : ISchemaService
         return schema?.ContentTypes ?? new List<ContentTypeInfo>();
     }
 
+    public async Task<List<string>> GetQueryableTypeNamesAsync(CancellationToken cancellationToken = default)
+    {
+        var schema = await GetSchemaInfoAsync(cancellationToken);
+        return schema?.QueryableTypeNames ?? new List<string>();
+    }
+
     public async Task<ContentTypeInfo?> GetContentTypeAsync(string typeName, CancellationToken cancellationToken = default)
     {
         var schema = await GetSchemaInfoAsync(cancellationToken);
@@ -154,7 +160,8 @@ public class SchemaService : ISchemaService
         var schema = new SchemaInfo
         {
             FetchedAt = DateTime.UtcNow,
-            ContentTypes = new List<ContentTypeInfo>()
+            ContentTypes = new List<ContentTypeInfo>(),
+            QueryableTypeNames = new List<string>()
         };
 
         if (!data.HasValue)
@@ -180,13 +187,23 @@ public class SchemaService : ISchemaService
         {
             var fieldName = field.GetProperty("name").GetString() ?? "";
 
-            // Skip internal fields
-            if (fieldName.StartsWith("_") || fieldName.StartsWith("__"))
+            // Skip GraphQL introspection fields (double underscore)
+            if (fieldName.StartsWith("__"))
+                continue;
+
+            // Add to the list of queryable type names for the dropdown
+            schema.QueryableTypeNames.Add(fieldName);
+
+            // For content type matching, skip single underscore prefixed names
+            if (fieldName.StartsWith("_"))
                 continue;
 
             // The field name is often the content type name
             queryableTypeNames.Add(fieldName);
         }
+
+        // Sort the queryable type names alphabetically
+        schema.QueryableTypeNames.Sort();
 
         // Second pass: Build content type info for each type
         foreach (var type in types.EnumerateArray())

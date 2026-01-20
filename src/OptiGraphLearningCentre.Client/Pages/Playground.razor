@@ -113,7 +113,7 @@
 
 @code {
     private string _query = @"{
-  Content(limit: 5) {
+  _Content(limit: 5) {
     items {
       _metadata {
         key
@@ -195,19 +195,13 @@
     private void LoadSampleQuery()
     {
         _query = @"{
-  Content(
-    where: { _fulltext: { contains: ""welcome"" } }
-    orderBy: { _ranking: RELEVANCE }
-    limit: 10
-  ) {
+  _Content(limit: 5) {
     items {
       _metadata {
         key
         displayName
         types
-        locale
       }
-      _score
     }
     total
   }

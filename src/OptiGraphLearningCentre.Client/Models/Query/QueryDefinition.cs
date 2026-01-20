@@ -134,10 +134,8 @@ public enum FilterOperator
     Eq,
     /// <summary>Not equals</summary>
     NotEq,
-    /// <summary>Pattern matching with wildcards</summary>
+    /// <summary>Pattern matching with wildcards (use * for wildcard, e.g. *text*)</summary>
     Like,
-    /// <summary>Full-text search within field</summary>
-    Contains,
     /// <summary>Greater than</summary>
     Gt,
     /// <summary>Greater than or equal</summary>

@@ -108,6 +108,11 @@ public class SchemaInfo
     public List<ContentTypeInfo> ContentTypes { get; set; } = new();
 
     /// <summary>
+    /// Names of queryable types from the Query root (e.g., _Content, _Page, BlogPost)
+    /// </summary>
+    public List<string> QueryableTypeNames { get; set; } = new();
+
+    /// <summary>
     /// When the schema was last fetched
     /// </summary>
     public DateTime FetchedAt { get; set; }

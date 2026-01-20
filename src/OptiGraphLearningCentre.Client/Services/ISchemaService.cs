@@ -13,6 +13,11 @@ public interface ISchemaService
     Task<List<ContentTypeInfo>> GetContentTypesAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets the list of queryable type names from the Query root (e.g., _Content, _Page, BlogPost)
+    /// </summary>
+    Task<List<string>> GetQueryableTypeNamesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets detailed information about a specific content type
     /// </summary>
     Task<ContentTypeInfo?> GetContentTypeAsync(string typeName, CancellationToken cancellationToken = default);

@@ -25,5 +25,5 @@ public interface ISettingsService
     /// <summary>
     /// Event fired when settings change
     /// </summary>
-    event Action? OnSettingsChanged;
+    event Action<GraphSettings>? OnSettingsChanged;
 }
