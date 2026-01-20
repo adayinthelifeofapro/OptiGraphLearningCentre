@@ -1,0 +1,20 @@
+<span class="@BadgeClass">
+    @ChildContent
+</span>
+
+@code {
+    [Parameter]
+    public BadgeVariant Variant { get; set; } = BadgeVariant.Default;
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private string BadgeClass => Variant switch
+    {
+        BadgeVariant.Primary => "badge-primary",
+        BadgeVariant.Success => "badge-success",
+        BadgeVariant.Warning => "badge-warning",
+        BadgeVariant.Danger => "badge-danger",
+        _ => "badge-gray"
+    };
+}

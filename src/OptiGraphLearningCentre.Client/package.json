@@ -1,0 +1,14 @@
+{
+  "name": "optigraph-learning-centre",
+  "version": "1.0.0",
+  "description": "Optimizely Graph Learning Centre - Blazor WASM with Tailwind CSS",
+  "scripts": {
+    "css:build": "npx tailwindcss -i ./Styles/app.css -o ./wwwroot/css/app.css --minify",
+    "css:watch": "npx tailwindcss -i ./Styles/app.css -o ./wwwroot/css/app.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0",
+    "@tailwindcss/forms": "^0.5.7",
+    "@tailwindcss/typography": "^0.5.10"
+  }
+}

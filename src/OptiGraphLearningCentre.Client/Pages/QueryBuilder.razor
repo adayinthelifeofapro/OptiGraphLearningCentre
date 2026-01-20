@@ -1,0 +1,317 @@
+@page "/query-builder"
+@inject IQueryBuilderService QueryBuilderService
+@inject ISchemaService SchemaService
+@inject IGraphQLClient GraphQLClient
+@inject QueryState QueryState
+
+<PageTitle>Query Builder - Optimizely Graph Learning Centre</PageTitle>
+
+<div class="max-w-7xl mx-auto">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Visual Query Builder</h1>
+        <p class="text-gray-600 mt-1">Build GraphQL queries visually and see the results in real-time</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Left Panel - Builder -->
+        <div class="space-y-4">
+            <!-- Content Type -->
+            <Card Title="Content Type">
+                <ChildContent>
+                <div class="space-y-4">
+                    <div>
+                        <label class="label">Content Type Name</label>
+                        <input type="text" class="input" @bind="QueryState.CurrentDefinition.ContentType"
+                               @bind:event="oninput" @bind:after="UpdatePreview"
+                               placeholder="e.g., BlogPost, StandardPage, Content" />
+                        <p class="text-sm text-gray-500 mt-1">
+                            Enter the name of the content type to query
+                        </p>
+                    </div>
+
+                    <div>
+                        <label class="label">Locale</label>
+                        <input type="text" class="input" @bind="QueryState.CurrentDefinition.Locale"
+                               @bind:event="oninput" @bind:after="UpdatePreview"
+                               placeholder="e.g., en, sv, de" />
+                    </div>
+                </div>
+                </ChildContent>
+            </Card>
+
+            <!-- Fields -->
+            <Card Title="Fields">
+                <ChildContent>
+                <div class="space-y-2">
+                    <div class="flex gap-2">
+                        <input type="text" class="input flex-1" @bind="_newField"
+                               placeholder="Field name (e.g., Title, Name)" />
+                        <button class="btn-secondary" @onclick="AddField">Add</button>
+                    </div>
+
+                    @if (QueryState.CurrentDefinition.SelectedFields.Any())
+                    {
+                        <div class="flex flex-wrap gap-2 mt-3">
+                            @foreach (var field in QueryState.CurrentDefinition.SelectedFields)
+                            {
+                                <span class="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 rounded text-sm">
+                                    @field
+                                    <button @onclick="() => RemoveField(field)" class="text-gray-400 hover:text-red-500">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                    </button>
+                                </span>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-sm text-gray-500 mt-2">
+                            No fields selected. Default metadata fields will be returned.
+                        </p>
+                    }
+                </div>
+                </ChildContent>
+            </Card>
+
+            <!-- Filters -->
+            <Card Title="Filters">
+                <ChildContent>
+                @foreach (var filter in QueryState.CurrentDefinition.Filters)
+                {
+                    <div class="flex gap-2 mb-2 items-start">
+                        <input type="text" class="input flex-1" @bind="filter.Field"
+                               @bind:event="oninput" @bind:after="UpdatePreview"
+                               placeholder="Field" />
+                        <select class="select w-32" @bind="filter.Operator" @bind:after="UpdatePreview">
+                            @foreach (FilterOperator op in Enum.GetValues<FilterOperator>())
+                            {
+                                <option value="@op">@op.ToString().ToLower()</option>
+                            }
+                        </select>
+                        <input type="text" class="input flex-1" @bind="filter.Value"
+                               @bind:event="oninput" @bind:after="UpdatePreview"
+                               placeholder="Value" />
+                        <button @onclick="() => RemoveFilter(filter)" class="btn-ghost p-2 text-red-500">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>
+                    </div>
+                }
+                <button @onclick="AddFilter" class="btn-secondary w-full mt-2">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Add Filter
+                </button>
+                </ChildContent>
+            </Card>
+
+            <!-- Sorting -->
+            <Card Title="Sorting">
+                <ChildContent>
+                @foreach (var sort in QueryState.CurrentDefinition.Sorts)
+                {
+                    <div class="flex gap-2 mb-2">
+                        <input type="text" class="input flex-1" @bind="sort.Field"
+                               @bind:event="oninput" @bind:after="UpdatePreview"
+                               placeholder="Field" />
+                        <select class="select w-24" @bind="sort.Direction" @bind:after="UpdatePreview">
+                            <option value="@SortDirection.Asc">ASC</option>
+                            <option value="@SortDirection.Desc">DESC</option>
+                        </select>
+                        <button @onclick="() => RemoveSort(sort)" class="btn-ghost p-2 text-red-500">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>
+                    </div>
+                }
+                <button @onclick="AddSort" class="btn-secondary w-full mt-2">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Add Sort
+                </button>
+                </ChildContent>
+            </Card>
+
+            <!-- Pagination -->
+            <Card Title="Pagination">
+                <ChildContent>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="label">Skip</label>
+                        <input type="number" class="input" @bind="QueryState.CurrentDefinition.Pagination.Skip"
+                               @bind:event="oninput" @bind:after="UpdatePreview"
+                               min="0" placeholder="0" />
+                    </div>
+                    <div>
+                        <label class="label">Limit</label>
+                        <input type="number" class="input" @bind="QueryState.CurrentDefinition.Pagination.Limit"
+                               @bind:event="oninput" @bind:after="UpdatePreview"
+                               min="1" max="100" placeholder="10" />
+                    </div>
+                </div>
+                </ChildContent>
+            </Card>
+        </div>
+
+        <!-- Right Panel - Preview & Results -->
+        <div class="space-y-4">
+            <!-- Query Preview -->
+            <Card Title="Generated Query">
+                <ChildContent>
+                <pre class="code-block text-sm overflow-auto max-h-64">@_generatedQuery</pre>
+                </ChildContent>
+                <FooterContent>
+                    <div class="flex justify-end gap-2">
+                        <button class="btn-secondary" @onclick="CopyQuery">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                            </svg>
+                            Copy
+                        </button>
+                        <button class="btn-primary" @onclick="ExecuteQuery" disabled="@QueryState.IsExecuting">
+                            @if (QueryState.IsExecuting)
+                            {
+                                <span class="flex items-center gap-2">
+                                    <span class="spinner w-4 h-4"></span>
+                                    Executing...
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    Execute
+                                </span>
+                            }
+                        </button>
+                    </div>
+                </FooterContent>
+            </Card>
+
+            <!-- Results -->
+            <Card Title="Results">
+                <ChildContent>
+                @if (QueryState.IsExecuting)
+                {
+                    <div class="flex items-center justify-center py-12">
+                        <LoadingSpinner Message="Executing query..." />
+                    </div>
+                }
+                else if (string.IsNullOrEmpty(QueryState.LastResponse))
+                {
+                    <p class="text-gray-500 italic py-8 text-center">
+                        Execute the query to see results
+                    </p>
+                }
+                else
+                {
+                    <JsonViewer Json="@QueryState.LastResponse" />
+                }
+                </ChildContent>
+            </Card>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string _generatedQuery = string.Empty;
+    private string _newField = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        UpdatePreview();
+    }
+
+    private void UpdatePreview()
+    {
+        _generatedQuery = QueryBuilderService.BuildQuery(QueryState.CurrentDefinition);
+        QueryState.RawQuery = _generatedQuery;
+    }
+
+    private void AddField()
+    {
+        if (!string.IsNullOrWhiteSpace(_newField))
+        {
+            QueryState.CurrentDefinition.SelectedFields.Add(_newField.Trim());
+            _newField = string.Empty;
+            UpdatePreview();
+        }
+    }
+
+    private void RemoveField(string field)
+    {
+        QueryState.CurrentDefinition.SelectedFields.Remove(field);
+        UpdatePreview();
+    }
+
+    private void AddFilter()
+    {
+        QueryState.CurrentDefinition.Filters.Add(new FilterDefinition());
+        UpdatePreview();
+    }
+
+    private void RemoveFilter(FilterDefinition filter)
+    {
+        QueryState.CurrentDefinition.Filters.Remove(filter);
+        UpdatePreview();
+    }
+
+    private void AddSort()
+    {
+        QueryState.CurrentDefinition.Sorts.Add(new SortDefinition
+        {
+            Order = QueryState.CurrentDefinition.Sorts.Count
+        });
+        UpdatePreview();
+    }
+
+    private void RemoveSort(SortDefinition sort)
+    {
+        QueryState.CurrentDefinition.Sorts.Remove(sort);
+        UpdatePreview();
+    }
+
+    private async Task ExecuteQuery()
+    {
+        QueryState.IsExecuting = true;
+        StateHasChanged();
+
+        try
+        {
+            var request = new GraphQLRequest { Query = _generatedQuery };
+            var response = await GraphQLClient.ExecuteAsync(request);
+
+            QueryState.LastResponse = System.Text.Json.JsonSerializer.Serialize(
+                response,
+                new System.Text.Json.JsonSerializerOptions { WriteIndented = true }
+            );
+
+            QueryState.AddToHistory(_generatedQuery, QueryState.LastResponse, !response.HasErrors);
+        }
+        catch (Exception ex)
+        {
+            QueryState.LastResponse = System.Text.Json.JsonSerializer.Serialize(
+                new { error = ex.Message },
+                new System.Text.Json.JsonSerializerOptions { WriteIndented = true }
+            );
+        }
+        finally
+        {
+            QueryState.IsExecuting = false;
+        }
+    }
+
+    private async Task CopyQuery()
+    {
+        // TODO: Implement clipboard copy via JS interop
+    }
+}

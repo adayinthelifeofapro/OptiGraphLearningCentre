@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet new:*)",
+      "Bash(dotnet sln add:*)",
+      "Bash(dotnet add:*)",
+      "Bash(npm run css:build:*)",
+      "Bash(dotnet build:*)",
+      "Bash(npm run build:css:*)",
+      "Bash(timeout:*)",
+      "Bash(dotnet run:*)"
+    ]
+  }
+}

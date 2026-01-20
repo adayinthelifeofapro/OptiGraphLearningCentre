@@ -1,0 +1,27 @@
+<div class="@ContainerClass">
+    <div class="spinner @SpinnerClass"></div>
+    @if (!string.IsNullOrEmpty(Message))
+    {
+        <p class="mt-2 text-sm text-gray-500">@Message</p>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string? Message { get; set; }
+
+    [Parameter]
+    public bool Center { get; set; } = true;
+
+    [Parameter]
+    public SpinnerSize Size { get; set; } = SpinnerSize.Medium;
+
+    private string ContainerClass => Center ? "flex flex-col items-center justify-center" : "";
+
+    private string SpinnerClass => Size switch
+    {
+        SpinnerSize.Small => "w-4 h-4 border-2",
+        SpinnerSize.Large => "w-8 h-8 border-3",
+        _ => "w-6 h-6 border-2"
+    };
+}
