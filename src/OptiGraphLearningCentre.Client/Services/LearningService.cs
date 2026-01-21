@@ -99,7 +99,8 @@ public class LearningService : ILearningService
             BuildContentRelationshipsModule(),
             BuildRecursiveQueriesModule(),
             BuildContentVariationsModule(),
-            BuildAdvancedModule()
+            BuildAdvancedModule(),
+            BuildMigrationModule()
         };
 
         // Link lessons
@@ -3096,6 +3097,1112 @@ Header: cg-stored-query: template</pre>
                             }
                         }
                     }
+                }
+            }
+        };
+    }
+
+    private static LearningModule BuildMigrationModule()
+    {
+        return new LearningModule
+        {
+            Id = "migration",
+            Title = "Migrating from Search & Navigation",
+            Description = "Learn how to migrate from Optimizely Search & Navigation (Find) to Optimizely Graph",
+            Icon = "arrow-path",
+            Order = 12,
+            Difficulty = ModuleDifficulty.Advanced,
+            Prerequisites = new[] { "getting-started", "filtering", "search" },
+            Lessons = new List<Lesson>
+            {
+                new()
+                {
+                    Id = "migration-overview",
+                    ModuleId = "migration",
+                    Title = "Migration Overview",
+                    Summary = "Understand why and when to migrate from Search & Navigation to Optimizely Graph",
+                    Order = 1,
+                    EstimatedMinutes = 12,
+                    LearningObjectives = new List<string>
+                    {
+                        "Understand the key differences between Search & Navigation and Optimizely Graph",
+                        "Learn the benefits of migrating to Graph",
+                        "Identify prerequisites and requirements for migration",
+                        "Understand current feature gaps and workarounds"
+                    },
+                    Content = @"<h3>Why Migrate to Optimizely Graph?</h3>
+<p>Optimizely Graph represents a significant evolution from Search & Navigation, offering modern capabilities for content delivery:</p>
+
+<table class='w-full border-collapse border border-slate-400 dark:border-slate-600 my-4'>
+<thead>
+<tr class='bg-slate-100 dark:bg-slate-700'>
+<th class='border border-slate-300 dark:border-slate-600 p-2 text-left'>Feature</th>
+<th class='border border-slate-300 dark:border-slate-600 p-2 text-left'>Search & Navigation</th>
+<th class='border border-slate-300 dark:border-slate-600 p-2 text-left'>Optimizely Graph</th>
+</tr>
+</thead>
+<tbody>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Architecture</td><td class='border border-slate-300 dark:border-slate-600 p-2'>Elasticsearch-based, page-centric</td><td class='border border-slate-300 dark:border-slate-600 p-2'>GraphQL-based, content-centric</td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Query Language</td><td class='border border-slate-300 dark:border-slate-600 p-2'>C# Fluent API</td><td class='border border-slate-300 dark:border-slate-600 p-2'>GraphQL + .NET Client</td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>AI Search</td><td class='border border-slate-300 dark:border-slate-600 p-2'>Keyword matching only</td><td class='border border-slate-300 dark:border-slate-600 p-2'>Semantic search with AI</td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Distribution</td><td class='border border-slate-300 dark:border-slate-600 p-2'>Single region</td><td class='border border-slate-300 dark:border-slate-600 p-2'>CDN edge network, global</td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Headless Support</td><td class='border border-slate-300 dark:border-slate-600 p-2'>Limited</td><td class='border border-slate-300 dark:border-slate-600 p-2'>Built for headless, replaces Content Delivery API</td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>CMS Compatibility</td><td class='border border-slate-300 dark:border-slate-600 p-2'>All CMS versions</td><td class='border border-slate-300 dark:border-slate-600 p-2'>CMS 12+ only</td></tr>
+</tbody>
+</table>
+
+<h3>CMS 13 Requirement</h3>
+<p class='bg-amber-50 dark:bg-amber-900/30 border-l-4 border-amber-500 p-4 my-4'>
+<strong>Important:</strong> CMS 13 (releasing Q1 2026) will use Optimizely Graph as its foundation for content delivery. If you plan to upgrade to CMS 13, migrating to Graph is a prerequisite.
+</p>
+
+<h3>Current Feature Gaps</h3>
+<p>Some Search & Navigation features are not yet available in Optimizely Graph:</p>
+<ul>
+<li><strong>Best Bets</strong> - Manual result positioning (use boosting via API as alternative)</li>
+<li><strong>Tracking</strong> - User behavior tracking for personalized search</li>
+<li><strong>Did You Mean</strong> - Spelling suggestions</li>
+<li><strong>Spellcheck</strong> - Automatic spelling correction</li>
+<li><strong>GDPR Tools</strong> - Built-in data management features</li>
+</ul>
+
+<h3>Prerequisites for Migration</h3>
+<ul>
+<li><strong>CMS 12+</strong> - Optimizely Graph requires CMS 12 or later</li>
+<li><strong>SaaS or PaaS Core</strong> - SaaS customers have immediate access; PaaS requires separate licensing</li>
+<li><strong>.NET 6+</strong> - The Graph .NET SDK requires .NET 6 or higher</li>
+</ul>
+
+<h3>Migration Strategy</h3>
+<p>Most organizations run Search & Navigation and Graph in parallel during migration:</p>
+<ol>
+<li>Install and configure Optimizely Graph alongside S&N</li>
+<li>Sync content to Graph index</li>
+<li>Migrate queries incrementally</li>
+<li>Test thoroughly before switching production traffic</li>
+<li>Remove S&N when migration is complete</li>
+</ol>",
+                    Examples = new List<LessonExample>()
+                },
+                new()
+                {
+                    Id = "migration-installation",
+                    ModuleId = "migration",
+                    Title = "Installation & Configuration",
+                    Summary = "Set up Optimizely Graph packages and configure your CMS for migration",
+                    Order = 2,
+                    EstimatedMinutes = 15,
+                    LearningObjectives = new List<string>
+                    {
+                        "Install the required NuGet packages",
+                        "Configure appsettings.json for Graph",
+                        "Register Graph services in the DI container",
+                        "Run the content synchronization job"
+                    },
+                    Content = @"<h3>Step 1: Install NuGet Packages</h3>
+<p>Remove the old Search & Navigation package and install the Graph packages:</p>
+<pre class='code-block'># Remove Search & Navigation
+Uninstall-Package EPiServer.Find
+
+# Install Optimizely Graph packages
+Install-Package Optimizely.ContentGraph.Cms
+Install-Package Optimizely.Graph.Client</pre>
+
+<h3>Step 2: Configure appsettings.json</h3>
+<p>Add your Optimizely Graph credentials to your configuration:</p>
+<pre class='code-block'>{
+  ""Optimizely"": {
+    ""ContentGraph"": {
+      ""GatewayAddress"": ""https://cg.optimizely.com"",
+      ""AppKey"": ""your-app-key"",
+      ""Secret"": ""your-secret"",
+      ""SingleKey"": ""your-single-key"",
+      ""AllowSendingLog"": true
+    }
+  }
+}</pre>
+
+<p class='bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500 p-4 my-4'>
+<strong>Tip:</strong> You can find your credentials in the Optimizely PaaS Portal or DXP management interface.
+</p>
+
+<h3>Step 3: Register Services</h3>
+<p>Update your <code>Startup.cs</code> or <code>Program.cs</code> to register the Graph services:</p>
+<pre class='code-block'>public void ConfigureServices(IServiceCollection services)
+{
+    // Required: Sync CMS data to Graph
+    services.AddContentDeliveryApi();
+
+    // Core service to sync CMS data to Optimizely Graph
+    services.AddContentGraph();
+
+    // Client API for querying Graph
+    services.AddContentGraphClient();
+}</pre>
+
+<h3>Step 4: Configure Content Type Exposure</h3>
+<p>Optionally customize which content types are exposed through the API. Remove abstract modifiers from base types if needed:</p>
+<pre class='code-block'>[ContentType(
+    AvailableInEditMode = false,
+    DisplayName = ""Site Page Base"")]
+public class SitePageData : PageData
+{
+    // Base page properties
+}</pre>
+
+<h3>Step 5: Run Content Synchronization</h3>
+<p>After installation, run the <strong>""Optimizely Graph content synchronization job""</strong> from the Admin interface to index existing content.</p>
+
+<h3>Step 6: Generate Model Classes (Optional)</h3>
+<p>Use the CLI tool to generate strongly-typed C# classes from your GraphQL schema:</p>
+<pre class='code-block'># Install the tool
+dotnet tool install Optimizely.Graph.Client.Tools --local
+
+# Generate models
+dotnet ogschema appsettings.json Models\GraphModels.cs default MyApp.Models</pre>",
+                    Examples = new List<LessonExample>
+                    {
+                        new()
+                        {
+                            Id = "migration-schema-check",
+                            Title = "Verify Schema After Sync",
+                            Description = "Check that your content types are available in Graph after synchronization",
+                            GraphQLQuery = @"{
+  __schema {
+    types {
+      name
+      kind
+    }
+  }
+}",
+                            IsInteractive = true,
+                            Hints = new List<string>
+                            {
+                                "After sync, your CMS content types should appear in the schema",
+                                "Look for types matching your page and block names"
+                            }
+                        }
+                    }
+                },
+                new()
+                {
+                    Id = "migration-query-syntax",
+                    ModuleId = "migration",
+                    Title = "Query Syntax Comparison",
+                    Summary = "Compare Search & Navigation query syntax with Optimizely Graph GraphQL",
+                    Order = 3,
+                    EstimatedMinutes = 18,
+                    LearningObjectives = new List<string>
+                    {
+                        "Understand the fundamental syntax differences",
+                        "Translate common S&N patterns to GraphQL",
+                        "Learn the Graph .NET Client fluent API",
+                        "Understand when to use raw GraphQL vs .NET Client"
+                    },
+                    Content = @"<h3>Basic Query Comparison</h3>
+<p>Let's compare how common operations are written in both systems:</p>
+
+<h4>Search & Navigation (Old)</h4>
+<pre class='code-block'>var results = _searchClient.Search&lt;ArticlePage&gt;()
+    .For(""optimizely"")
+    .Filter(x => x.PublishedDate.After(DateTime.Now.AddMonths(-6)))
+    .OrderByDescending(x => x.PublishedDate)
+    .Skip(0)
+    .Take(10)
+    .GetResult();</pre>
+
+<h4>Optimizely Graph - GraphQL</h4>
+<pre class='code-block'>{
+  ArticlePage(
+    where: {
+      _fulltext: { match: ""optimizely"" }
+      PublishedDate: { gte: ""2024-07-01"" }
+    }
+    orderBy: { PublishedDate: DESC }
+    skip: 0
+    limit: 10
+  ) {
+    items {
+      Name
+      PublishedDate
+      MainBody
+    }
+    total
+  }
+}</pre>
+
+<h4>Optimizely Graph - .NET Client</h4>
+<pre class='code-block'>var query = _queryBuilder
+    .ForType&lt;ArticlePage&gt;()
+    .Search(""optimizely"")
+    .Where(x => x.PublishedDate.Gte(DateTime.Now.AddMonths(-6)))
+    .OrderBy(x => x.PublishedDate, OrderMode.DESC)
+    .Skip(0)
+    .Limit(10)
+    .Fields(x => x.Name, x => x.PublishedDate, x => x.MainBody)
+    .Total()
+    .ToQuery()
+    .BuildQueries();
+
+var result = await _graphClient.RunQueryAsync(query);</pre>
+
+<h3>Key Syntax Differences</h3>
+<table class='w-full border-collapse border border-slate-400 dark:border-slate-600 my-4'>
+<thead>
+<tr class='bg-slate-100 dark:bg-slate-700'>
+<th class='border border-slate-300 dark:border-slate-600 p-2 text-left'>Concept</th>
+<th class='border border-slate-300 dark:border-slate-600 p-2 text-left'>S&N</th>
+<th class='border border-slate-300 dark:border-slate-600 p-2 text-left'>Graph</th>
+</tr>
+</thead>
+<tbody>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Search text</td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.For(""text"")</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>_fulltext: { match: ""text"" }</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Filter equals</td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.Filter(x => x.Status.Match(""Published""))</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>Status: { eq: ""Published"" }</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Filter contains</td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.Filter(x => x.Title.Contains(""news""))</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>Title: { contains: ""news"" }</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Date range</td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.Filter(x => x.Date.InRange(start, end))</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>Date: { gte: ""start"", lte: ""end"" }</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Pagination</td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.Skip(10).Take(20)</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>skip: 10, limit: 20</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Sort desc</td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.OrderByDescending(x => x.Date)</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>orderBy: { Date: DESC }</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Total count</td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>result.TotalMatching</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>total</code> field</td></tr>
+</tbody>
+</table>
+
+<h3>Selecting Fields</h3>
+<p class='bg-green-50 dark:bg-green-900/30 border-l-4 border-green-500 p-4 my-4'>
+<strong>Key Difference:</strong> In GraphQL, you must explicitly select the fields you want. This prevents over-fetching and improves performance compared to S&N which returns all indexed fields by default.
+</p>
+
+<h3>When to Use Each Approach</h3>
+<ul>
+<li><strong>Raw GraphQL</strong> - Frontend/headless applications, JavaScript/React, testing in playground</li>
+<li><strong>.NET Client</strong> - Backend C# code, strongly-typed queries, familiar fluent API</li>
+</ul>",
+                    Examples = new List<LessonExample>
+                    {
+                        new()
+                        {
+                            Id = "migration-basic-query",
+                            Title = "Basic Content Query",
+                            Description = "A simple query to retrieve content items - the Graph equivalent of Search<T>().GetResult()",
+                            GraphQLQuery = @"{
+  Content(
+    limit: 10
+  ) {
+    items {
+      Name
+      ContentType
+      Url
+      Changed
+    }
+    total
+  }
+}",
+                            IsInteractive = true,
+                            Hints = new List<string>
+                            {
+                                "Unlike S&N, you must specify which fields to return",
+                                "The 'total' field gives you the count like TotalMatching"
+                            }
+                        }
+                    }
+                },
+                new()
+                {
+                    Id = "migration-filters",
+                    ModuleId = "migration",
+                    Title = "Migrating Filters",
+                    Summary = "Learn how to translate Search & Navigation filter expressions to Optimizely Graph",
+                    Order = 4,
+                    EstimatedMinutes = 15,
+                    LearningObjectives = new List<string>
+                    {
+                        "Convert S&N filter expressions to Graph where clauses",
+                        "Understand the different filter operators available",
+                        "Handle complex boolean filter combinations",
+                        "Use the .NET Client filter builders"
+                    },
+                    Content = @"<h3>Filter Operator Mapping</h3>
+<p>Search & Navigation filter operators map to Graph operators as follows:</p>
+
+<table class='w-full border-collapse border border-slate-400 dark:border-slate-600 my-4'>
+<thead>
+<tr class='bg-slate-100 dark:bg-slate-700'>
+<th class='border border-slate-300 dark:border-slate-600 p-2 text-left'>Operation</th>
+<th class='border border-slate-300 dark:border-slate-600 p-2 text-left'>S&N</th>
+<th class='border border-slate-300 dark:border-slate-600 p-2 text-left'>Graph GraphQL</th>
+<th class='border border-slate-300 dark:border-slate-600 p-2 text-left'>Graph .NET Client</th>
+</tr>
+</thead>
+<tbody>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Equals</td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.Match(""value"")</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>eq: ""value""</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.Eq(""value"")</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Not equals</td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>!.Match(""value"")</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>notEq: ""value""</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.NotEq(""value"")</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Contains</td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.Contains(""text"")</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>contains: ""text""</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.Contains(""text"")</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>In list</td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.In(new[]{...})</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>in: [...]</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.In(1, 2, 3)</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Greater than</td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.GreaterThan(n)</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>gt: n</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.Gt(n)</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Less than</td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.LessThan(n)</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>lt: n</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.Lt(n)</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Range</td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.InRange(min, max)</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>gte: min, lte: max</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.InRange(min, max)</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Exists</td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.Exists()</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>exist: true</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.Exists()</code></td></tr>
+</tbody>
+</table>
+
+<h3>S&N Filter Example</h3>
+<pre class='code-block'>// Search & Navigation
+var results = _searchClient.Search&lt;ArticlePage&gt;()
+    .Filter(x => x.Category.Match(""Technology""))
+    .Filter(x => x.PublishedDate.After(startDate))
+    .Filter(x => x.PublishedDate.Before(endDate))
+    .Filter(x => x.Author.In(new[] { ""John"", ""Jane"" }))
+    .GetResult();</pre>
+
+<h3>Graph GraphQL Equivalent</h3>
+<pre class='code-block'>{
+  ArticlePage(
+    where: {
+      Category: { eq: ""Technology"" }
+      PublishedDate: {
+        gte: ""2024-01-01""
+        lte: ""2024-12-31""
+      }
+      Author: { in: [""John"", ""Jane""] }
+    }
+  ) {
+    items { Name PublishedDate Author }
+    total
+  }
+}</pre>
+
+<h3>Graph .NET Client Equivalent</h3>
+<pre class='code-block'>var query = _queryBuilder
+    .ForType&lt;ArticlePage&gt;()
+    .Where(x => x.Category.Eq(""Technology""))
+    .Where(x => x.PublishedDate.Gte(startDate))
+    .Where(x => x.PublishedDate.Lte(endDate))
+    .Where(x => x.Author.In(""John"", ""Jane""))
+    .Fields(x => x.Name, x => x.PublishedDate, x => x.Author)
+    .Total()
+    .ToQuery()
+    .BuildQueries();</pre>
+
+<h3>Boolean Logic (AND/OR/NOT)</h3>
+<p>In S&N, multiple <code>.Filter()</code> calls are implicitly AND-ed. Graph works the same way:</p>
+
+<h4>AND Logic (Implicit)</h4>
+<pre class='code-block'>// Both systems: multiple filters = AND
+where: {
+  Status: { eq: ""Published"" }
+  Category: { eq: ""News"" }
+}</pre>
+
+<h4>OR Logic</h4>
+<pre class='code-block'>// S&N
+.Filter(x => x.Category.Match(""News"") | x.Category.Match(""Events""))
+
+// Graph GraphQL
+where: {
+  _or: [
+    { Category: { eq: ""News"" } }
+    { Category: { eq: ""Events"" } }
+  ]
+}
+
+// Graph .NET Client
+var orFilter = BooleanFilter
+    .OrFilter&lt;ArticlePage&gt;()
+    .Or(x => x.Category.Eq(""News""))
+    .Or(x => x.Category.Eq(""Events""));</pre>
+
+<h4>NOT Logic</h4>
+<pre class='code-block'>// S&N
+.Filter(x => !x.Status.Match(""Draft""))
+
+// Graph GraphQL
+where: {
+  _not: { Status: { eq: ""Draft"" } }
+}
+
+// Graph .NET Client
+var notFilter = BooleanFilter
+    .NotFilter&lt;ArticlePage&gt;()
+    .Not(x => x.Status.Eq(""Draft""));</pre>",
+                    Examples = new List<LessonExample>
+                    {
+                        new()
+                        {
+                            Id = "migration-filter-example",
+                            Title = "Combined Filters",
+                            Description = "Multiple filters combined - equivalent to chained .Filter() calls in S&N",
+                            GraphQLQuery = @"{
+  Content(
+    where: {
+      ContentType: { in: [""ArticlePage"", ""NewsPage""] }
+      Status: { eq: ""Published"" }
+    }
+    limit: 10
+  ) {
+    items {
+      Name
+      ContentType
+      Status
+    }
+    total
+  }
+}",
+                            IsInteractive = true,
+                            Hints = new List<string>
+                            {
+                                "Multiple where conditions are AND-ed together by default",
+                                "Use _or for OR logic, _not for negation"
+                            }
+                        }
+                    }
+                },
+                new()
+                {
+                    Id = "migration-fulltext-search",
+                    ModuleId = "migration",
+                    Title = "Full-Text Search Migration",
+                    Summary = "Migrate full-text search functionality from Search & Navigation to Optimizely Graph",
+                    Order = 5,
+                    EstimatedMinutes = 15,
+                    LearningObjectives = new List<string>
+                    {
+                        "Migrate .For() searches to Graph _fulltext queries",
+                        "Understand relevance scoring differences",
+                        "Implement search highlighting",
+                        "Configure searchable fields"
+                    },
+                    Content = @"<h3>Full-Text Search Comparison</h3>
+
+<h4>Search & Navigation</h4>
+<pre class='code-block'>var results = _searchClient.Search&lt;ArticlePage&gt;()
+    .For(""climate change policy"")
+    .InField(x => x.Title, 2.0)      // Boost title matches
+    .InField(x => x.MainBody)
+    .InField(x => x.Summary)
+    .ApplyBestBets()                  // Not available in Graph
+    .Track()                          // Not available in Graph
+    .GetResult();</pre>
+
+<h4>Optimizely Graph</h4>
+<pre class='code-block'>{
+  ArticlePage(
+    where: {
+      _fulltext: {
+        match: ""climate change policy""
+        boost: 2
+      }
+    }
+    orderBy: { _ranking: RELEVANCE }
+  ) {
+    items {
+      Name
+      Title
+      MainBody
+      _score
+      _highlight {
+        Title
+        MainBody
+      }
+    }
+    total
+  }
+}</pre>
+
+<h3>Key Differences</h3>
+<table class='w-full border-collapse border border-slate-400 dark:border-slate-600 my-4'>
+<thead>
+<tr class='bg-slate-100 dark:bg-slate-700'>
+<th class='border border-slate-300 dark:border-slate-600 p-2 text-left'>Feature</th>
+<th class='border border-slate-300 dark:border-slate-600 p-2 text-left'>S&N</th>
+<th class='border border-slate-300 dark:border-slate-600 p-2 text-left'>Graph</th>
+</tr>
+</thead>
+<tbody>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Search method</td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.For(""text"")</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>_fulltext: { match: ""text"" }</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Field boosting</td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.InField(x => x.Title, 2.0)</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>boost: 2</code> on field</td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Relevance score</td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>hit.Score</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>_score</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Highlighting</td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.Highlight()</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>_highlight { }</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Sort by relevance</td><td class='border border-slate-300 dark:border-slate-600 p-2'>Default</td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>orderBy: { _ranking: RELEVANCE }</code></td></tr>
+</tbody>
+</table>
+
+<h3>Match vs Contains</h3>
+<p>Graph offers two full-text operators:</p>
+<ul>
+<li><strong>match</strong> - Full-text search with relevance scoring (like S&N's <code>.For()</code>)</li>
+<li><strong>contains</strong> - Substring match, case-insensitive (like S&N's <code>.Contains()</code>)</li>
+</ul>
+
+<pre class='code-block'>// Full-text search with relevance
+_fulltext: { match: ""climate policy"" }
+
+// Substring/contains search
+Title: { contains: ""climate"" }</pre>
+
+<h3>Search Highlighting</h3>
+<p>Request highlighted snippets showing where matches occurred:</p>
+<pre class='code-block'>{
+  ArticlePage(
+    where: { _fulltext: { match: ""renewable energy"" } }
+  ) {
+    items {
+      Title
+      _highlight {
+        Title
+        MainBody
+      }
+    }
+  }
+}</pre>
+<p>The <code>_highlight</code> field returns text with matched terms wrapped in <code>&lt;em&gt;</code> tags.</p>
+
+<h3>Searchable vs Queryable Fields</h3>
+<p class='bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500 p-4 my-4'>
+<strong>Important:</strong> In Optimizely Graph, fields must be marked as <strong>Searchable</strong> in the schema to be included in full-text search. This is configured at the content type level in your CMS.
+</p>
+<ul>
+<li><strong>Searchable</strong> - Included in full-text search (<code>_fulltext</code>), supports <code>match</code> operator</li>
+<li><strong>Queryable</strong> - Available for filtering, sorting, and faceting with <code>contains</code> operator</li>
+</ul>",
+                    Examples = new List<LessonExample>
+                    {
+                        new()
+                        {
+                            Id = "migration-search-example",
+                            Title = "Full-Text Search with Scoring",
+                            Description = "Search content and retrieve relevance scores - equivalent to .For().GetResult()",
+                            GraphQLQuery = @"{
+  Content(
+    where: {
+      _fulltext: { match: ""optimizely"" }
+    }
+    orderBy: { _ranking: RELEVANCE }
+    limit: 10
+  ) {
+    items {
+      Name
+      ContentType
+      _score
+    }
+    total
+  }
+}",
+                            IsInteractive = true,
+                            Hints = new List<string>
+                            {
+                                "_score shows the relevance ranking like hit.Score in S&N",
+                                "Use orderBy: { _ranking: RELEVANCE } for relevance-sorted results"
+                            }
+                        }
+                    }
+                },
+                new()
+                {
+                    Id = "migration-facets",
+                    ModuleId = "migration",
+                    Title = "Facets & Aggregations",
+                    Summary = "Migrate faceted navigation from Search & Navigation to Optimizely Graph",
+                    Order = 6,
+                    EstimatedMinutes = 12,
+                    LearningObjectives = new List<string>
+                    {
+                        "Convert S&N TermsFacet to Graph facets",
+                        "Implement facet filtering",
+                        "Handle hierarchical facets",
+                        "Understand facet count behavior differences"
+                    },
+                    Content = @"<h3>Facet Comparison</h3>
+
+<h4>Search & Navigation</h4>
+<pre class='code-block'>var results = _searchClient.Search&lt;ArticlePage&gt;()
+    .TermsFacetFor(x => x.Category)
+    .TermsFacetFor(x => x.Author)
+    .RangeFacetFor(x => x.PublishedDate,
+        r => r.From(DateTime.Now.AddYears(-1)).To(DateTime.Now))
+    .GetResult();
+
+// Access facets
+var categoryFacet = results.TermsFacetFor(x => x.Category);
+foreach (var term in categoryFacet.Terms)
+{
+    Console.WriteLine($""{term.Term}: {term.Count}"");
+}</pre>
+
+<h4>Optimizely Graph</h4>
+<pre class='code-block'>{
+  ArticlePage(
+    where: { Status: { eq: ""Published"" } }
+  ) {
+    items { Name Category Author }
+    total
+    facets {
+      Category {
+        name
+        count
+      }
+      Author {
+        name
+        count
+      }
+      PublishedDate(ranges: [
+        { from: ""2024-01-01"", to: ""2024-12-31"" }
+      ]) {
+        name
+        count
+      }
+    }
+  }
+}</pre>
+
+<h3>Facet Types</h3>
+<table class='w-full border-collapse border border-slate-400 dark:border-slate-600 my-4'>
+<thead>
+<tr class='bg-slate-100 dark:bg-slate-700'>
+<th class='border border-slate-300 dark:border-slate-600 p-2 text-left'>Type</th>
+<th class='border border-slate-300 dark:border-slate-600 p-2 text-left'>S&N</th>
+<th class='border border-slate-300 dark:border-slate-600 p-2 text-left'>Graph</th>
+</tr>
+</thead>
+<tbody>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Terms</td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.TermsFacetFor()</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>facets { Field { name count } }</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Date Range</td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.RangeFacetFor()</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>Field(ranges: [...]) { }</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Numeric Range</td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.RangeFacetFor()</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>Field(ranges: [...]) { }</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'>Histogram</td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.HistogramFacetFor()</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'>Range facets with intervals</td></tr>
+</tbody>
+</table>
+
+<h3>Facet Limiting and Ordering</h3>
+<pre class='code-block'>{
+  ArticlePage {
+    facets {
+      Category(
+        limit: 10
+        orderType: COUNT
+        orderBy: DESC
+      ) {
+        name
+        count
+      }
+    }
+  }
+}</pre>
+
+<h3>.NET Client Facets</h3>
+<pre class='code-block'>var query = _queryBuilder
+    .ForType&lt;ArticlePage&gt;()
+    .Fields(x => x.Name, x => x.Category)
+    .Facet(x => x.Category.FacetLimit(10))
+    .Facet(x => x.Author.FacetLimit(5))
+    .Total()
+    .ToQuery()
+    .BuildQueries();</pre>
+
+<h3>Applying Facet Filters</h3>
+<p>When a user selects a facet value, add it to your where clause:</p>
+<pre class='code-block'>{
+  ArticlePage(
+    where: {
+      Category: { eq: ""Technology"" }  # Selected facet value
+    }
+  ) {
+    items { Name }
+    facets {
+      Category { name count }
+      Author { name count }
+    }
+  }
+}</pre>",
+                    Examples = new List<LessonExample>
+                    {
+                        new()
+                        {
+                            Id = "migration-facet-example",
+                            Title = "Faceted Search",
+                            Description = "Get content with facet counts - equivalent to TermsFacetFor()",
+                            GraphQLQuery = @"{
+  Content(limit: 5) {
+    items {
+      Name
+      ContentType
+    }
+    total
+    facets {
+      ContentType {
+        name
+        count
+      }
+    }
+  }
+}",
+                            IsInteractive = true,
+                            Hints = new List<string>
+                            {
+                                "Facets return aggregated counts like S&N TermsFacet",
+                                "You can limit facets and control their ordering"
+                            }
+                        }
+                    }
+                },
+                new()
+                {
+                    Id = "migration-semantic-search",
+                    ModuleId = "migration",
+                    Title = "Semantic Search (New in Graph)",
+                    Summary = "Leverage AI-powered semantic search capabilities unique to Optimizely Graph",
+                    Order = 7,
+                    EstimatedMinutes = 12,
+                    LearningObjectives = new List<string>
+                    {
+                        "Understand what semantic search offers beyond keyword matching",
+                        "Enable semantic search in your queries",
+                        "Combine semantic and keyword search",
+                        "Understand current limitations"
+                    },
+                    Content = @"<h3>What is Semantic Search?</h3>
+<p>Semantic search is an AI-powered search capability <strong>not available in Search & Navigation</strong>. It understands the <em>meaning</em> and <em>intent</em> behind queries, not just keyword matches.</p>
+
+<h4>The Vocabulary Mismatch Problem</h4>
+<p>Traditional keyword search fails when users use different words than content creators:</p>
+<ul>
+<li>User searches: ""<em>non-alcoholic cold beverage</em>"" → Should find ""<em>cola</em>"" and ""<em>soft drinks</em>""</li>
+<li>User searches: ""<em>how to fix a leaky faucet</em>"" → Should find ""<em>plumbing repair guide</em>""</li>
+<li>User searches: ""<em>affordable housing options</em>"" → Should find ""<em>budget apartments</em>""</li>
+</ul>
+
+<h3>Enabling Semantic Search</h3>
+<p>Add <code>_ranking: SEMANTIC</code> to your queries:</p>
+<pre class='code-block'>{
+  ArticlePage(
+    where: {
+      _fulltext: { match: ""renewable energy alternatives"" }
+    }
+    orderBy: { _ranking: SEMANTIC }
+  ) {
+    items {
+      Name
+      Title
+      _score
+    }
+    total
+  }
+}</pre>
+
+<h3>Ranking Options</h3>
+<table class='w-full border-collapse border border-slate-400 dark:border-slate-600 my-4'>
+<thead>
+<tr class='bg-slate-100 dark:bg-slate-700'>
+<th class='border border-slate-300 dark:border-slate-600 p-2 text-left'>Ranking</th>
+<th class='border border-slate-300 dark:border-slate-600 p-2 text-left'>Description</th>
+<th class='border border-slate-300 dark:border-slate-600 p-2 text-left'>Best For</th>
+</tr>
+</thead>
+<tbody>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'><code>RELEVANCE</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'>Traditional keyword relevance (like S&N)</td><td class='border border-slate-300 dark:border-slate-600 p-2'>Exact term matching</td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'><code>SEMANTIC</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'>AI-powered contextual understanding</td><td class='border border-slate-300 dark:border-slate-600 p-2'>Natural language queries</td></tr>
+</tbody>
+</table>
+
+<h3>Combining with Date Sorting</h3>
+<p>Use semantic relevance as a tiebreaker after primary sort:</p>
+<pre class='code-block'>{
+  ArticlePage(
+    where: { _fulltext: { match: ""climate policy"" } }
+    orderBy: [
+      { PublishedDate: DESC }
+      { _ranking: SEMANTIC }
+    ]
+  ) {
+    items { Name PublishedDate _score }
+  }
+}</pre>
+
+<h3>Use Cases for Semantic Search</h3>
+<ul>
+<li><strong>Natural language queries</strong> - ""How do I return a product?""</li>
+<li><strong>Conceptual searches</strong> - Finding related content by meaning</li>
+<li><strong>Chatbots/RAG</strong> - Retrieval Augmented Generation for AI assistants</li>
+<li><strong>Content recommendations</strong> - Finding semantically similar content</li>
+</ul>
+
+<h3>Current Limitations</h3>
+<p class='bg-amber-50 dark:bg-amber-900/30 border-l-4 border-amber-500 p-4 my-4'>
+<strong>Note:</strong> Semantic search currently supports <strong>English only</strong>. Multi-language semantic search may be added in future releases.
+</p>
+
+<h3>.NET Client Semantic Search</h3>
+<pre class='code-block'>var query = _queryBuilder
+    .ForType&lt;ArticlePage&gt;()
+    .Search(""renewable energy alternatives"")
+    .OrderBy(Ranking.SEMANTIC)
+    .Fields(x => x.Name, x => x.Title)
+    .ToQuery()
+    .BuildQueries();</pre>",
+                    Examples = new List<LessonExample>
+                    {
+                        new()
+                        {
+                            Id = "migration-semantic-example",
+                            Title = "Semantic Search Query",
+                            Description = "Use AI-powered semantic search for contextual understanding",
+                            GraphQLQuery = @"{
+  Content(
+    where: {
+      _fulltext: { match: ""how to get started"" }
+    }
+    orderBy: { _ranking: SEMANTIC }
+    limit: 10
+  ) {
+    items {
+      Name
+      ContentType
+      _score
+    }
+    total
+  }
+}",
+                            IsInteractive = true,
+                            Hints = new List<string>
+                            {
+                                "SEMANTIC ranking uses AI to understand query intent",
+                                "Results may include content that doesn't contain exact keywords"
+                            }
+                        }
+                    }
+                },
+                new()
+                {
+                    Id = "migration-dotnet-client",
+                    ModuleId = "migration",
+                    Title = "Using the .NET Client SDK",
+                    Summary = "Learn the Optimizely Graph .NET Client for a familiar fluent API experience",
+                    Order = 8,
+                    EstimatedMinutes = 15,
+                    LearningObjectives = new List<string>
+                    {
+                        "Set up the .NET Client in your project",
+                        "Build queries using the fluent API",
+                        "Understand the mapping from S&N patterns",
+                        "Execute queries and handle responses"
+                    },
+                    Content = @"<h3>Why Use the .NET Client?</h3>
+<p>The Optimizely Graph .NET Client provides a familiar fluent API similar to Search & Navigation, making migration easier for C# developers.</p>
+
+<h3>Setup</h3>
+<pre class='code-block'>// Register in DI container
+services.AddContentGraphClient();
+
+// Inject in your service
+public class SearchService
+{
+    private readonly IContentGraphClient _graphClient;
+    private readonly IQueryBuilder _queryBuilder;
+
+    public SearchService(
+        IContentGraphClient graphClient,
+        IQueryBuilder queryBuilder)
+    {
+        _graphClient = graphClient;
+        _queryBuilder = queryBuilder;
+    }
+}</pre>
+
+<h3>Building Queries</h3>
+<p>The .NET Client uses a builder pattern similar to S&N:</p>
+<pre class='code-block'>// Search & Navigation (old)
+var sn_results = _searchClient.Search&lt;ArticlePage&gt;()
+    .For(""optimizely"")
+    .Filter(x => x.Status.Match(""Published""))
+    .OrderByDescending(x => x.PublishedDate)
+    .Skip(0)
+    .Take(10)
+    .GetResult();
+
+// Optimizely Graph .NET Client (new)
+var query = _queryBuilder
+    .ForType&lt;ArticlePage&gt;()
+    .Search(""optimizely"")
+    .Where(x => x.Status.Eq(""Published""))
+    .OrderBy(x => x.PublishedDate, OrderMode.DESC)
+    .Skip(0)
+    .Limit(10)
+    .Fields(x => x.Name, x => x.Title, x => x.PublishedDate)
+    .Total()
+    .ToQuery()
+    .BuildQueries();
+
+var result = await _graphClient.RunQueryAsync(query);</pre>
+
+<h3>Query Builder Methods</h3>
+<table class='w-full border-collapse border border-slate-400 dark:border-slate-600 my-4'>
+<thead>
+<tr class='bg-slate-100 dark:bg-slate-700'>
+<th class='border border-slate-300 dark:border-slate-600 p-2 text-left'>S&N Method</th>
+<th class='border border-slate-300 dark:border-slate-600 p-2 text-left'>Graph .NET Client Method</th>
+</tr>
+</thead>
+<tbody>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'><code>Search&lt;T&gt;()</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>ForType&lt;T&gt;()</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.For(""text"")</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.Search(""text"")</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.Filter(x => ...)</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.Where(x => ...)</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.OrderBy(x => ...)</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.OrderBy(x => ..., OrderMode.ASC)</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.OrderByDescending(x => ...)</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.OrderBy(x => ..., OrderMode.DESC)</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.Skip(n)</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.Skip(n)</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.Take(n)</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.Limit(n)</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.TermsFacetFor(x => ...)</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.Facet(x => x.Field.FacetLimit(n))</code></td></tr>
+<tr><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.GetResult()</code></td><td class='border border-slate-300 dark:border-slate-600 p-2'><code>.ToQuery().BuildQueries()</code> then <code>RunQueryAsync()</code></td></tr>
+</tbody>
+</table>
+
+<h3>Filter Operators</h3>
+<pre class='code-block'>// String operators
+.Where(x => x.Title.Eq(""exact match""))
+.Where(x => x.Title.Contains(""partial""))
+.Where(x => x.Title.Match(""full text search""))
+.Where(x => x.Status.In(""Draft"", ""Published""))
+
+// Numeric operators
+.Where(x => x.ViewCount.Gt(100))
+.Where(x => x.ViewCount.Lt(1000))
+.Where(x => x.ViewCount.InRange(100, 1000))
+
+// Date operators
+.Where(x => x.PublishedDate.Gte(DateTime.Now.AddMonths(-6)))
+.Where(x => x.PublishedDate.Lte(DateTime.Now))
+
+// Boolean combinations
+.Where(x => x.Title.Match(""news"") & x.Status.Eq(""Published""))
+.Where(x => x.Category.Eq(""Tech"") | x.Category.Eq(""Science""))</pre>
+
+<h3>Handling Responses</h3>
+<pre class='code-block'>var result = await _graphClient.RunQueryAsync(query);
+
+// Access items
+foreach (var item in result.Data.ArticlePage.Items)
+{
+    Console.WriteLine($""{item.Name} - {item.PublishedDate}"");
+}
+
+// Get total count
+var total = result.Data.ArticlePage.Total;
+
+// Access facets
+foreach (var facet in result.Data.ArticlePage.Facets.Category)
+{
+    Console.WriteLine($""{facet.Name}: {facet.Count}"");
+}</pre>",
+                    Examples = new List<LessonExample>()
+                },
+                new()
+                {
+                    Id = "migration-best-practices",
+                    ModuleId = "migration",
+                    Title = "Migration Best Practices",
+                    Summary = "Strategies and tips for a successful migration from Search & Navigation",
+                    Order = 9,
+                    EstimatedMinutes = 10,
+                    LearningObjectives = new List<string>
+                    {
+                        "Plan an incremental migration strategy",
+                        "Test and validate migrated queries",
+                        "Handle missing S&N features",
+                        "Optimize performance post-migration"
+                    },
+                    Content = @"<h3>Migration Strategy</h3>
+<p>Follow these steps for a successful migration:</p>
+
+<h4>1. Run in Parallel</h4>
+<p>Keep Search & Navigation running while you migrate:</p>
+<pre class='code-block'>// Feature flag to switch between systems
+if (_featureFlags.UseOptimizelyGraph)
+{
+    return await SearchWithGraph(query);
+}
+else
+{
+    return SearchWithSN(query);
+}</pre>
+
+<h4>2. Migrate Incrementally</h4>
+<p>Migrate one search feature at a time:</p>
+<ol>
+<li>Start with simple listing queries</li>
+<li>Move to filtered searches</li>
+<li>Migrate faceted navigation</li>
+<li>Convert full-text search last</li>
+</ol>
+
+<h4>3. Test Thoroughly</h4>
+<p>Compare results between systems:</p>
+<pre class='code-block'>// Log both results for comparison
+var snResults = SearchWithSN(query);
+var graphResults = await SearchWithGraph(query);
+
+_logger.LogInformation(
+    ""S&N: {SNCount} results, Graph: {GraphCount} results"",
+    snResults.TotalMatching,
+    graphResults.Total);</pre>
+
+<h3>Handling Missing Features</h3>
+
+<h4>Best Bets Alternative</h4>
+<p>Use query boosting to promote specific content:</p>
+<pre class='code-block'>{
+  ArticlePage(
+    where: {
+      _or: [
+        { ContentGuid: { in: [""promoted-guid-1"", ""promoted-guid-2""] } }
+        { _fulltext: { match: ""search term"" } }
+      ]
+    }
+    orderBy: [
+      { _boost: DESC }  # Boosted items first
+      { _ranking: RELEVANCE }
+    ]
+  ) { ... }
+}</pre>
+
+<h4>Tracking Alternative</h4>
+<p>Implement custom analytics:</p>
+<ul>
+<li>Log search queries and clicks to your analytics platform</li>
+<li>Use Google Analytics events for search tracking</li>
+<li>Build a custom search analytics service</li>
+</ul>
+
+<h3>Performance Optimization</h3>
+
+<h4>Select Only Needed Fields</h4>
+<pre class='code-block'>// Bad: Returns all fields (like S&N default)
+.Fields(x => x)
+
+// Good: Select only what you need
+.Fields(x => x.Name, x => x.Url, x => x.PublishedDate)</pre>
+
+<h4>Use Cached Templates</h4>
+<p>For frequently-run queries, use cached templates to reduce parsing overhead.</p>
+
+<h4>Leverage Edge Caching</h4>
+<p>Optimizely Graph runs on a CDN edge network. Design queries to be cache-friendly:</p>
+<ul>
+<li>Avoid highly personalized queries where possible</li>
+<li>Use consistent query structures</li>
+<li>Consider query result caching in your application</li>
+</ul>
+
+<h3>Common Migration Pitfalls</h3>
+<ul>
+<li><strong>Forgetting to select fields</strong> - GraphQL requires explicit field selection</li>
+<li><strong>Over-fetching</strong> - Select only needed fields, not entire objects</li>
+<li><strong>Ignoring pagination</strong> - Always use limit to avoid large result sets</li>
+<li><strong>Missing error handling</strong> - Graph queries can fail; handle errors gracefully</li>
+</ul>
+
+<h3>Helpful Resources</h3>
+<ul>
+<li><a href='https://docs.developers.optimizely.com/platform-optimizely/docs/how-to-migrate-sn-to-content-graph' target='_blank'>Official Migration Guide</a></li>
+<li><a href='https://github.com/episerver/graph-net-sdk' target='_blank'>Graph .NET SDK Repository</a></li>
+<li><a href='https://world.optimizely.com/forum/' target='_blank'>Optimizely World Forum</a></li>
+</ul>",
+                    Examples = new List<LessonExample>()
                 }
             }
         };
