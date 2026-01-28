@@ -52,7 +52,7 @@
   }
 
   .card-header {
-    @apply px-6 py-4 border-b border-gray-200 bg-gray-50;
+    @apply px-6 py-4 border-b border-gray-200 bg-gray-50 rounded-t-xl;
     @apply dark:border-gray-700 dark:bg-gray-800;
   }
 
