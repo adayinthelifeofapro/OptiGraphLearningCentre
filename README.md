@@ -1,14 +1,14 @@
-# Optimizely Graph Learning Centre
+# Optimizely Learning Centre
 
-An interactive learning platform for [Optimizely Graph](https://docs.developers.optimizely.com/content-graph), a GraphQL API service for content management. Built with Blazor WebAssembly, this client-side application provides hands-on tutorials, a query playground, and visual query builder to help developers master Optimizely Graph.
+An interactive multi-course learning platform for Optimizely products, including [Optimizely Graph](https://docs.developers.optimizely.com/content-graph) (GraphQL API) and [Opal](https://docs.developers.optimizely.com/opal) (AI-assisted content). Built with Blazor WebAssembly, this client-side application provides hands-on tutorials and interactive examples to help developers master Optimizely technologies.
 
 ## Features
 
-- **Interactive Learning Modules** - Step-by-step tutorials covering Optimizely Graph concepts
-- **GraphQL Playground** - Execute queries directly against your Optimizely Graph instance
-- **Visual Query Builder** - Construct GraphQL queries without writing code
-- **Schema Explorer** - Browse and understand your content model
-- **Multiple Authentication Modes** - Support for HMAC, SingleKey, and public access
+- **Multi-Course Platform** - Learn multiple Optimizely products from a single application
+- **Interactive Learning Modules** - Step-by-step tutorials covering Optimizely concepts
+- **Course-Specific Tools** - GraphQL Playground and Query Builder for Graph course
+- **Hands-on Examples** - Execute queries and prompts directly within lessons
+- **Progress Tracking** - Track your learning progress across courses
 
 ## Prerequisites
 
@@ -28,7 +28,7 @@ cd opti-graph-learning-centre
 ### 2. Install npm dependencies
 
 ```bash
-cd src/OptiGraphLearningCentre.Client
+cd src/OptimizelyLearningCentre.Client
 npm install
 ```
 
@@ -41,7 +41,7 @@ npm run css:build
 ### 4. Run the application
 
 ```bash
-dotnet run --project src/OptiGraphLearningCentre.Client/OptiGraphLearningCentre.Client.csproj
+dotnet run --project src/OptimizelyLearningCentre.Client/OptimizelyLearningCentre.Client.csproj
 ```
 
 The application will be available at:
@@ -54,22 +54,22 @@ The application will be available at:
 
 ```bash
 # Build the application
-dotnet build src/OptiGraphLearningCentre.Client/OptiGraphLearningCentre.Client.csproj
+dotnet build src/OptimizelyLearningCentre.Client/OptimizelyLearningCentre.Client.csproj
 
 # Run in development mode
-dotnet run --project src/OptiGraphLearningCentre.Client/OptiGraphLearningCentre.Client.csproj
+dotnet run --project src/OptimizelyLearningCentre.Client/OptimizelyLearningCentre.Client.csproj
 
 # Watch Tailwind CSS changes (run in a separate terminal)
-cd src/OptiGraphLearningCentre.Client && npm run css:watch
+cd src/OptimizelyLearningCentre.Client && npm run css:watch
 
 # Build minified CSS for production
-cd src/OptiGraphLearningCentre.Client && npm run css:build
+cd src/OptimizelyLearningCentre.Client && npm run css:build
 ```
 
 ## Project Structure
 
 ```
-src/OptiGraphLearningCentre.Client/
+src/OptimizelyLearningCentre.Client/
 ├── Components/
 │   ├── Common/           # Reusable UI components (Badge, Card, JsonViewer, LoadingSpinner)
 │   └── Learning/         # Learning-specific components (TryItPanel)

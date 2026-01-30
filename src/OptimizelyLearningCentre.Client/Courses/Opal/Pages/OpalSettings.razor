@@ -1,0 +1,69 @@
+@page "/courses/opal/settings"
+@inject ISettingsService SettingsService
+
+<PageTitle>Settings - Optimizely Opal Learning Centre</PageTitle>
+
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Settings</h1>
+
+    <div class="space-y-6">
+        <!-- Appearance -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Appearance</h2>
+            </div>
+            <div class="card-body">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="font-medium text-gray-900 dark:text-gray-100">Dark Mode</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Switch to a darker colour scheme</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer" @bind="_isDarkMode" @bind:after="SaveSettings">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- About -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">About</h2>
+            </div>
+            <div class="card-body">
+                <p class="text-gray-600 dark:text-gray-400">
+                    Optimizely Opal Learning Centre is an interactive platform for learning AI-powered
+                    content creation with Optimizely Opal.
+                </p>
+                <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <a href="https://docs.developers.optimizely.com/platform-optimizely/docs/opal"
+                       target="_blank"
+                       class="text-opti-blue hover:underline flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                        </svg>
+                        Opal Documentation
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool _isDarkMode;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var settings = await SettingsService.GetSettingsAsync();
+        _isDarkMode = settings.IsDarkMode;
+    }
+
+    private async Task SaveSettings()
+    {
+        var settings = await SettingsService.GetSettingsAsync();
+        settings.IsDarkMode = _isDarkMode;
+        await SettingsService.SaveSettingsAsync(settings);
+    }
+}
