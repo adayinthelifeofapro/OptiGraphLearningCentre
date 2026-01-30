@@ -1,0 +1,167 @@
+@using OptimizelyLearningCentre.Client.Models.Learning
+@inject IJSRuntime JSRuntime
+
+<div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+    <!-- Tabs -->
+    <div class="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+        <button @onclick="() => _activeTab = Tab.Code"
+                class="@GetTabClass(Tab.Code)">
+            @GetTabLabel()
+        </button>
+        <button @onclick="ViewSampleResponse"
+                class="@GetTabClass(Tab.Response)">
+            Sample Response
+        </button>
+    </div>
+
+    <!-- Content -->
+    <div class="bg-gray-900 dark:bg-gray-950 text-gray-100">
+        @if (_activeTab == Tab.Code)
+        {
+            <div class="relative">
+                <pre class="h-64 p-4 font-mono text-sm overflow-auto whitespace-pre-wrap @GetSyntaxClass()">@Example.ExampleContent</pre>
+            </div>
+        }
+        else
+        {
+            <div class="h-64 overflow-auto p-4">
+                @if (string.IsNullOrEmpty(Example.SampleResponse))
+                {
+                    <p class="text-gray-500 italic">No sample response available</p>
+                }
+                else
+                {
+                    <pre class="font-mono text-sm whitespace-pre-wrap text-green-300">@Example.SampleResponse</pre>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+        <div class="flex items-center gap-4">
+            @if (Example.Hints.Any())
+            {
+                <button @onclick="ShowNextHint"
+                        class="text-sm text-gray-500 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
+                    Show Hint (@(_hintIndex + 1)/@Example.Hints.Count)
+                </button>
+            }
+        </div>
+
+        <div class="flex gap-2">
+            <button class="btn-secondary text-sm py-1.5 flex items-center gap-2" @onclick="CopyToClipboard">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+                @(_copied ? "Copied!" : "Copy")
+            </button>
+        </div>
+    </div>
+
+    <!-- Hints -->
+    @if (_showHint && _hintIndex < Example.Hints.Count)
+    {
+        <div class="mx-4 mb-4 p-3 bg-sky-50 dark:bg-sky-900/30 border border-sky-200 dark:border-sky-800 rounded-lg">
+            <div class="flex items-start gap-2">
+                <svg class="w-5 h-5 text-sky-600 dark:text-sky-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                </svg>
+                <div>
+                    <p class="text-sm font-medium text-sky-800 dark:text-sky-200">Hint @(_hintIndex + 1)</p>
+                    <p class="text-sm text-sky-700 dark:text-sky-300">@Example.Hints[_hintIndex]</p>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public LessonExample Example { get; set; } = default!;
+
+    [Parameter]
+    public bool IsLastExample { get; set; }
+
+    [Parameter]
+    public EventCallback OnQueryExecutedSuccessfully { get; set; }
+
+    private enum Tab { Code, Response }
+
+    private Tab _activeTab = Tab.Code;
+    private bool _showHint;
+    private int _hintIndex;
+    private bool _copied;
+
+    private string GetTabLabel() => Example.Type switch
+    {
+        ExampleType.Query => "GraphQL Query",
+        ExampleType.Code => "Code",
+        ExampleType.Configuration => "Configuration",
+        _ => "Example"
+    };
+
+    private string GetSyntaxClass() => Example.Type switch
+    {
+        ExampleType.Query => "text-pink-300",
+        ExampleType.Code => "text-blue-300",
+        ExampleType.Configuration => "text-yellow-300",
+        _ => "text-gray-300"
+    };
+
+    protected override void OnParametersSet()
+    {
+        if (Example != null)
+        {
+            _showHint = false;
+            _hintIndex = 0;
+            _copied = false;
+        }
+    }
+
+    private async Task CopyToClipboard()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("clipboardInterop.copyText", Example.ExampleContent);
+            _copied = true;
+            StateHasChanged();
+
+            await Task.Delay(2000);
+            _copied = false;
+            StateHasChanged();
+        }
+        catch
+        {
+            // Clipboard API not available
+        }
+    }
+
+    private void ShowNextHint()
+    {
+        _showHint = true;
+        if (_hintIndex < Example.Hints.Count - 1)
+        {
+            _hintIndex++;
+        }
+    }
+
+    private async Task ViewSampleResponse()
+    {
+        _activeTab = Tab.Response;
+
+        // Notify parent if this is the last example and user views the response
+        if (IsLastExample && OnQueryExecutedSuccessfully.HasDelegate)
+        {
+            await OnQueryExecutedSuccessfully.InvokeAsync();
+        }
+    }
+
+    private string GetTabClass(Tab tab)
+    {
+        var baseClass = "px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors";
+        return _activeTab == tab
+            ? $"{baseClass} border-sky-500 text-sky-600 dark:text-white dark:border-sky-400 bg-white dark:bg-gray-700"
+            : $"{baseClass} border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200";
+    }
+}
