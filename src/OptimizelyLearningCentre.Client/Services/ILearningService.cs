@@ -53,6 +53,11 @@ public interface ILearningService
     Task<LearningModule?> GetPreviousModuleAsync(string moduleId);
 
     /// <summary>
+    /// Gets the next module in sequence (by order)
+    /// </summary>
+    Task<LearningModule?> GetNextModuleAsync(string moduleId);
+
+    /// <summary>
     /// Checks if a module is complete (all lessons completed)
     /// </summary>
     Task<bool> IsModuleCompleteAsync(string moduleId);

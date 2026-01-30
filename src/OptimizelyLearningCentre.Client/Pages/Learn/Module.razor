@@ -196,6 +196,31 @@ else if (_course != null)
                                     </span>
                                 }
                             }
+                            else if (_isModuleComplete && _nextModule != null)
+                            {
+                                <!-- Last lesson completed - show Next Module button -->
+                                <a href="@($"/courses/{CourseId}/learn/{_nextModule.Id}")"
+                                   class="btn-primary flex items-center gap-2">
+                                    Next Module: @_nextModule.Title
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                                    </svg>
+                                </a>
+                            }
+                            else if (!_isCurrentLessonComplete && string.IsNullOrEmpty(_currentLesson.NextLessonId))
+                            {
+                                <!-- Last lesson but not yet complete -->
+                                @if (_nextModule != null)
+                                {
+                                    <span class="btn-primary flex items-center gap-2 opacity-50 cursor-not-allowed"
+                                          title="Complete this lesson to unlock the next module">
+                                        Next Module: @_nextModule.Title
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                                        </svg>
+                                    </span>
+                                }
+                            }
                         </div>
                     </div>
                 }
@@ -249,10 +274,12 @@ else if (_course != null)
 
     private CourseDefinition? _course;
     private LearningModule? _module;
+    private LearningModule? _nextModule;
     private Lesson? _currentLesson;
     private UserProgress? _progress;
     private bool _isLoading = true;
     private bool _isCurrentLessonComplete;
+    private bool _isModuleComplete;
     private EventCallback _onExampleCompletedCallback;
     private Dictionary<string, bool> _unlockedLessons = new();
     private DotNetObjectReference<Module>? _dotNetRef;
@@ -288,6 +315,10 @@ else if (_course != null)
             _progress = await LearningService.GetUserProgressAsync();
             _isCurrentLessonComplete = true;
             await RefreshUnlockedLessons();
+            if (_module != null)
+            {
+                _isModuleComplete = await LearningService.IsModuleCompleteAsync(_module.Id);
+            }
             StateHasChanged();
         }
     }
@@ -367,6 +398,13 @@ else if (_course != null)
             {
                 _isCurrentLessonComplete = false;
             }
+
+            // Load next module and check if current module is complete
+            if (_module != null)
+            {
+                _nextModule = await LearningService.GetNextModuleAsync(_module.Id);
+                _isModuleComplete = await LearningService.IsModuleCompleteAsync(_module.Id);
+            }
         }
 
         _isLoading = false;
@@ -392,6 +430,10 @@ else if (_course != null)
             _progress = await LearningService.GetUserProgressAsync();
             _isCurrentLessonComplete = true;
             await RefreshUnlockedLessons();
+            if (_module != null)
+            {
+                _isModuleComplete = await LearningService.IsModuleCompleteAsync(_module.Id);
+            }
             StateHasChanged();
         }
     }

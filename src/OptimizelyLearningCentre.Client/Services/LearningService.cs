@@ -127,6 +127,22 @@ public class LearningService : ILearningService
         return orderedModules[targetIndex - 1];
     }
 
+    public async Task<LearningModule?> GetNextModuleAsync(string moduleId)
+    {
+        var modules = await GetModulesAsync();
+        var orderedModules = modules.OrderBy(m => m.Order).ToList();
+
+        var targetModule = orderedModules.FirstOrDefault(m => m.Id == moduleId);
+        if (targetModule == null)
+            return null;
+
+        var targetIndex = orderedModules.IndexOf(targetModule);
+        if (targetIndex >= orderedModules.Count - 1)
+            return null;
+
+        return orderedModules[targetIndex + 1];
+    }
+
     public async Task<bool> IsModuleCompleteAsync(string moduleId)
     {
         var module = await GetModuleAsync(moduleId);
