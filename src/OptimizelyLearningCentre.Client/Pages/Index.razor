@@ -1,5 +1,6 @@
 @page "/"
 @inject ICourseRegistry CourseRegistry
+@inject ICourseContext CourseContext
 
 <PageTitle>Optimizely Learning Centre</PageTitle>
 
@@ -135,6 +136,8 @@
 
     protected override void OnInitialized()
     {
+        // Clear the current course context when viewing the catalog
+        CourseContext.SetCurrentCourse(null);
         _courses = CourseRegistry.GetAllCourses();
     }
 }
