@@ -1,0 +1,107 @@
+@page "/courses/cms12/settings"
+@inject ISettingsService SettingsService
+
+<PageTitle>Settings - Optimizely CMS 12 (PaaS) Learning Centre</PageTitle>
+
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Settings</h1>
+
+    <div class="space-y-6">
+        <!-- Learning Preferences -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Learning Preferences</h2>
+            </div>
+            <div class="card-body">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="font-medium text-gray-900 dark:text-gray-100">Unlock All Lessons</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Access all lessons without completing prerequisites. When disabled, lessons unlock sequentially as you progress.</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer" @bind="_unlockAllLessons" @bind:after="SaveSettings">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-500"></div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appearance -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Appearance</h2>
+            </div>
+            <div class="card-body">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="font-medium text-gray-900 dark:text-gray-100">Dark Mode</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Switch to a darker colour scheme</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer" @bind="_isDarkMode" @bind:after="SaveSettings">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-500"></div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- About -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">About</h2>
+            </div>
+            <div class="card-body">
+                <p class="text-gray-600 dark:text-gray-400">
+                    Optimizely CMS 12 (PaaS) Learning Centre is an interactive platform for learning
+                    to build websites with Optimizely's self-hosted .NET content management system.
+                </p>
+                <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                    <a href="https://docs.developers.optimizely.com/content-management-system/docs/getting-started"
+                       target="_blank"
+                       class="text-emerald-600 hover:underline flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                        </svg>
+                        CMS 12 Documentation
+                    </a>
+                    <a href="https://world.optimizely.com/"
+                       target="_blank"
+                       class="text-emerald-600 hover:underline flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                        </svg>
+                        Developer Community
+                    </a>
+                    <a href="https://academy.optimizely.com/"
+                       target="_blank"
+                       class="text-emerald-600 hover:underline flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                        </svg>
+                        Optimizely Academy
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool _isDarkMode;
+    private bool _unlockAllLessons;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var settings = await SettingsService.GetSettingsAsync();
+        _isDarkMode = settings.IsDarkMode;
+        _unlockAllLessons = settings.UnlockAllLessons;
+    }
+
+    private async Task SaveSettings()
+    {
+        var settings = await SettingsService.GetSettingsAsync();
+        settings.IsDarkMode = _isDarkMode;
+        settings.UnlockAllLessons = _unlockAllLessons;
+        await SettingsService.SaveSettingsAsync(settings);
+    }
+}

@@ -12,7 +12,8 @@
       "Bash(git rm:*)",
       "Bash(tree:*)",
       "Bash(cd d:ProjectsOptimizelyOpti Graph Learning Centre)",
-      "WebFetch(domain:chappytastic.co.uk)"
+      "WebFetch(domain:chappytastic.co.uk)",
+      "WebFetch(domain:docs.developers.optimizely.com)"
     ]
   }
 }
