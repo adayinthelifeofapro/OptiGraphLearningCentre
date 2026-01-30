@@ -7,7 +7,7 @@
                 class="@GetTabClass(Tab.Prompt)">
             @GetTabLabel()
         </button>
-        <button @onclick="() => _activeTab = Tab.Response"
+        <button @onclick="ViewSampleResponse"
                 class="@GetTabClass(Tab.Response)">
             Sample Response
         </button>
@@ -79,6 +79,12 @@
     [Parameter]
     public LessonExample Example { get; set; } = default!;
 
+    [Parameter]
+    public bool IsLastExample { get; set; }
+
+    [Parameter]
+    public EventCallback OnQueryExecutedSuccessfully { get; set; }
+
     private enum Tab { Prompt, Response }
 
     private Tab _activeTab = Tab.Prompt;
@@ -128,6 +134,17 @@
         if (_hintIndex < Example.Hints.Count - 1)
         {
             _hintIndex++;
+        }
+    }
+
+    private async Task ViewSampleResponse()
+    {
+        _activeTab = Tab.Response;
+
+        // Notify parent if this is the last example and user views the response
+        if (IsLastExample && OnQueryExecutedSuccessfully.HasDelegate)
+        {
+            await OnQueryExecutedSuccessfully.InvokeAsync();
         }
     }
 

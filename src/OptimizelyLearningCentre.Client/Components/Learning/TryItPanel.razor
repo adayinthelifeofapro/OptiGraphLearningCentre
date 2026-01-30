@@ -101,6 +101,12 @@
     [Parameter]
     public LessonExample Example { get; set; } = default!;
 
+    [Parameter]
+    public bool IsLastExample { get; set; }
+
+    [Parameter]
+    public EventCallback OnQueryExecutedSuccessfully { get; set; }
+
     private enum Tab { Query, Result }
 
     private Tab _activeTab = Tab.Query;
@@ -146,6 +152,12 @@
             {
                 // Serialize the data if it's valid
                 _result = System.Text.Json.JsonSerializer.Serialize(data, options);
+
+                // Notify parent if this is the last example and query succeeded
+                if (IsLastExample && OnQueryExecutedSuccessfully.HasDelegate)
+                {
+                    await OnQueryExecutedSuccessfully.InvokeAsync();
+                }
             }
             else
             {

@@ -91,6 +91,75 @@ public class LearningService : ILearningService
         return (double)completedCount / module.Lessons.Count * 100;
     }
 
+    public async Task<bool> IsModuleUnlockedAsync(string moduleId)
+    {
+        var modules = await GetModulesAsync();
+        var orderedModules = modules.OrderBy(m => m.Order).ToList();
+
+        // Find the target module
+        var targetModule = orderedModules.FirstOrDefault(m => m.Id == moduleId);
+        if (targetModule == null)
+            return false;
+
+        // First module is always unlocked
+        var targetIndex = orderedModules.IndexOf(targetModule);
+        if (targetIndex == 0)
+            return true;
+
+        // Check if the previous module is complete
+        var previousModule = orderedModules[targetIndex - 1];
+        return await IsModuleCompleteAsync(previousModule.Id);
+    }
+
+    public async Task<LearningModule?> GetPreviousModuleAsync(string moduleId)
+    {
+        var modules = await GetModulesAsync();
+        var orderedModules = modules.OrderBy(m => m.Order).ToList();
+
+        var targetModule = orderedModules.FirstOrDefault(m => m.Id == moduleId);
+        if (targetModule == null)
+            return null;
+
+        var targetIndex = orderedModules.IndexOf(targetModule);
+        if (targetIndex == 0)
+            return null;
+
+        return orderedModules[targetIndex - 1];
+    }
+
+    public async Task<bool> IsModuleCompleteAsync(string moduleId)
+    {
+        var module = await GetModuleAsync(moduleId);
+        if (module == null || module.Lessons.Count == 0)
+            return false;
+
+        var progress = await GetUserProgressAsync();
+        return module.Lessons.All(l =>
+            progress.CompletedLessons.TryGetValue(l.Id, out var p) && p.IsCompleted);
+    }
+
+    public async Task<bool> IsLessonUnlockedAsync(string moduleId, string lessonId)
+    {
+        var module = await GetModuleAsync(moduleId);
+        if (module == null)
+            return false;
+
+        var orderedLessons = module.Lessons.OrderBy(l => l.Order).ToList();
+        var targetLesson = orderedLessons.FirstOrDefault(l => l.Id == lessonId);
+        if (targetLesson == null)
+            return false;
+
+        // First lesson is always unlocked
+        var targetIndex = orderedLessons.IndexOf(targetLesson);
+        if (targetIndex == 0)
+            return true;
+
+        // Check if the previous lesson is complete
+        var previousLesson = orderedLessons[targetIndex - 1];
+        var progress = await GetUserProgressAsync();
+        return progress.CompletedLessons.TryGetValue(previousLesson.Id, out var p) && p.IsCompleted;
+    }
+
     private ILearningContentProvider GetContentProvider()
     {
         var course = _courseContext.CurrentCourse

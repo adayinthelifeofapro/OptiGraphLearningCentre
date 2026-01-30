@@ -41,4 +41,24 @@ public interface ILearningService
     /// Gets completion percentage for a module
     /// </summary>
     Task<double> GetModuleCompletionPercentageAsync(string moduleId);
+
+    /// <summary>
+    /// Checks if a module is unlocked (previous module is complete)
+    /// </summary>
+    Task<bool> IsModuleUnlockedAsync(string moduleId);
+
+    /// <summary>
+    /// Gets the previous module in sequence (by order)
+    /// </summary>
+    Task<LearningModule?> GetPreviousModuleAsync(string moduleId);
+
+    /// <summary>
+    /// Checks if a module is complete (all lessons completed)
+    /// </summary>
+    Task<bool> IsModuleCompleteAsync(string moduleId);
+
+    /// <summary>
+    /// Checks if a lesson is unlocked (previous lesson is complete or it's the first lesson)
+    /// </summary>
+    Task<bool> IsLessonUnlockedAsync(string moduleId, string lessonId);
 }
