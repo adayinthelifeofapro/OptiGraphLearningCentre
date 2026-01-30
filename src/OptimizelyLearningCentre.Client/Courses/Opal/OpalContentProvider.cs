@@ -418,57 +418,66 @@ Try: ""Write a product description for a blue running shoe targeting fitness ent
                     },
                     Content = @"
 <h2>Writing Effective Prompts</h2>
-<p>The quality of your prompts directly impacts the quality of Opal's responses. Here are proven techniques for better results.</p>
+<p>The quality of your prompts directly impacts the quality of Opal's responses. The CLEAR framework provides a structured approach for writing prompts that deliver consistent, high-quality results.</p>
 
-<h3>The CRAFT Framework</h3>
+<h3>The CLEAR Framework</h3>
+<p>CLEAR addresses common prompt failures by providing strong task framing, enabling predictable responses, supporting reusability, and driving human-like outputs at scale.</p>
+
 <ul>
-    <li><strong>C</strong>ontext - Provide background information</li>
-    <li><strong>R</strong>ole - Define what perspective Opal should take</li>
-    <li><strong>A</strong>ction - Clearly state what you want done</li>
-    <li><strong>F</strong>ormat - Specify the desired output format</li>
-    <li><strong>T</strong>one - Indicate the style or voice</li>
+    <li><strong>C</strong>ontext - Establish the ""who, what, and why"" by defining the audience, tone, format, and domain. This sets the foundation for everything that follows.</li>
+    <li><strong>L</strong>ogic - Outline the mental models, frameworks, constraints, and strategic thinking approaches. This guides how Opal should reason through the task.</li>
+    <li><strong>E</strong>xamples - Demonstrate the desired output through few-shot learning. Show ""what good looks like"" so Opal understands your expectations.</li>
+    <li><strong>A</strong>ction - Specify the precise output format, structure, and delivery requirements. Be explicit about what you need.</li>
+    <li><strong>R</strong>efinement - Build in feedback loops and quality checks. Define how to verify the output meets your requirements.</li>
 </ul>
 
-<h3>Prompt Techniques</h3>
+<h3>Why CLEAR Works</h3>
+<p>Each component addresses a specific failure mode in prompting:</p>
+<ul>
+    <li><strong>Without Context</strong>, responses lack relevance to your specific situation</li>
+    <li><strong>Without Logic</strong>, reasoning becomes inconsistent or shallow</li>
+    <li><strong>Without Examples</strong>, output quality varies unpredictably</li>
+    <li><strong>Without Action</strong>, you get vague or incorrectly formatted responses</li>
+    <li><strong>Without Refinement</strong>, errors go uncaught and quality degrades</li>
+</ul>
 
-<h4>Be Specific</h4>
-<p>Include details about length, format, audience, and purpose.</p>
-
-<h4>Use Examples</h4>
-<p>Show Opal what you're looking for with sample outputs.</p>
-
-<h4>Break Down Complex Tasks</h4>
-<p>Divide large requests into smaller, manageable steps.</p>
-
-<h4>Iterate and Refine</h4>
-<p>Use follow-up prompts to refine results: ""Make it shorter"", ""Add more detail about..."", ""Change the tone to...""</p>
+<h3>Best Practices</h3>
+<ul>
+    <li><strong>Collaborate across teams</strong> - Involve domain experts when crafting prompts</li>
+    <li><strong>Maintain version control</strong> - Keep a library of tested, effective prompts</li>
+    <li><strong>Avoid common pitfalls</strong> - Don't overload context, keep actions clear, always include refinement steps</li>
+    <li><strong>Iterate systematically</strong> - Test each CLEAR component independently to identify what needs improvement</li>
+</ul>
 ",
                     Examples = new List<LessonExample>
                     {
                         new LessonExample
                         {
-                            Id = "chat-craft-example",
-                            Title = "Using the CRAFT Framework",
-                            Description = "See how the CRAFT framework improves prompt quality.",
+                            Id = "chat-clear-example",
+                            Title = "Using the CLEAR Framework",
+                            Description = "See how the CLEAR framework structures prompts for consistent, high-quality results.",
                             Type = ExampleType.Prompt,
-                            ExampleContent =@"Context: We're launching a new sustainable clothing line called ""EcoWear"" targeting millennials.
-Role: Act as an experienced marketing copywriter.
-Action: Write a hero section headline and subheadline for our landing page.
-Format: Provide 3 options, each with a headline (max 8 words) and subheadline (max 20 words).
-Tone: Inspiring, eco-conscious, but not preachy.",
-                            SampleResponse = @"Here are 3 hero section options for EcoWear:
+                            ExampleContent =@"**CONTEXT**
+You are writing sales follow-up emails for a B2B cybersecurity firm. The audience is IT directors at mid-sized companies who attended our webinar on ransomware prevention. Tone should be professional but approachable.
 
-**Option 1**
-Headline: Wear Your Values, Literally
-Subheadline: Premium sustainable fashion that looks good, feels good, and does good for the planet.
+**LOGIC**
+Follow this sequence: (1) Thank them for attending, (2) Reiterate one key value proposition from the webinar, (3) Personalise based on their company size, (4) Link to a relevant resource, (5) Include a clear call-to-action for a demo.
 
-**Option 2**
-Headline: Fashion Forward, Earth First
-Subheadline: Join the movement where style meets sustainability. Because your wardrobe choices matter.
+**EXAMPLES**
+Good: ""Hi Sarah, Thanks for joining our ransomware prevention webinar. Given Acme Corp's recent expansion, protecting your growing infrastructure is critical. Here's our enterprise security checklist. Would you like to see how we protect companies your size?""
 
-**Option 3**
-Headline: Good Clothes for Good People
-Subheadline: Ethically made, beautifully designed clothing for those who care about tomorrow."
+**ACTION**
+Write a 4-sentence follow-up email, maximum 120 words. Include one statistic from the webinar. End with a question that invites a response.
+
+**REFINEMENT**
+Before finalising: Verify the company name is spelled correctly, ensure no jargon that a non-technical executive wouldn't understand, confirm the call-to-action is specific and time-bound.",
+                            SampleResponse = @"Hi James,
+
+Thank you for attending our ""Ransomware in 2024"" webinar last Tuesday. With 73% of mid-sized companies experiencing at least one ransomware attempt this year, your proactive approach to security is exactly what protects organisations like DataFlow Solutions. I've attached our incident response checklist that covers the rapid containment strategies we discussed.
+
+Would you have 20 minutes this week for a quick demo of how our platform could strengthen DataFlow's defences?
+
+Best regards"
                         }
                     }
                 },
