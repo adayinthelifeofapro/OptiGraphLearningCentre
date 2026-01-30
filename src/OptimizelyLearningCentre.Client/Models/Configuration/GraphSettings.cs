@@ -49,6 +49,11 @@ public class GraphSettings
     /// Whether dark mode is enabled
     /// </summary>
     public bool IsDarkMode { get; set; } = false;
+
+    /// <summary>
+    /// Whether all lessons should be unlocked (skip sequential progression)
+    /// </summary>
+    public bool UnlockAllLessons { get; set; } = false;
 }
 
 /// <summary>

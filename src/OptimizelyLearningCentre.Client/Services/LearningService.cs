@@ -12,15 +12,18 @@ public class LearningService : ILearningService
     private readonly ILocalStorageService _localStorage;
     private readonly ICourseContext _courseContext;
     private readonly IServiceProvider _serviceProvider;
+    private readonly ISettingsService _settingsService;
 
     public LearningService(
         ILocalStorageService localStorage,
         ICourseContext courseContext,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider,
+        ISettingsService settingsService)
     {
         _localStorage = localStorage;
         _courseContext = courseContext;
         _serviceProvider = serviceProvider;
+        _settingsService = settingsService;
     }
 
     public async Task<List<LearningModule>> GetModulesAsync()
@@ -93,6 +96,11 @@ public class LearningService : ILearningService
 
     public async Task<bool> IsModuleUnlockedAsync(string moduleId)
     {
+        // Check if all lessons are unlocked via settings
+        var settings = await _settingsService.GetSettingsAsync();
+        if (settings.UnlockAllLessons)
+            return true;
+
         var modules = await GetModulesAsync();
         var orderedModules = modules.OrderBy(m => m.Order).ToList();
 
@@ -156,6 +164,11 @@ public class LearningService : ILearningService
 
     public async Task<bool> IsLessonUnlockedAsync(string moduleId, string lessonId)
     {
+        // Check if all lessons are unlocked via settings
+        var settings = await _settingsService.GetSettingsAsync();
+        if (settings.UnlockAllLessons)
+            return true;
+
         var module = await GetModuleAsync(moduleId);
         if (module == null)
             return false;
