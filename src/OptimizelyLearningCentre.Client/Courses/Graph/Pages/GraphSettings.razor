@@ -1,0 +1,251 @@
+@page "/courses/graph/settings"
+@inject ISettingsService SettingsService
+@inject IGraphQLClient GraphQLClient
+@inject AppState AppState
+
+<PageTitle>Settings - Optimizely Graph Learning Centre</PageTitle>
+
+<div class="max-w-3xl mx-auto space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-1">Configure your Optimizely Graph connection</p>
+    </div>
+
+    <Card Title="Connection Settings">
+        <ChildContent>
+        <div class="space-y-6">
+            <!-- Endpoint -->
+            <div>
+                <label class="label">Graph Endpoint</label>
+                <input type="url" class="input" @bind="_settings.Endpoint"
+                       placeholder="https://cg.optimizely.com/content/v2" />
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">The Optimizely Graph API endpoint URL</p>
+            </div>
+
+            <!-- Authentication Mode -->
+            <div>
+                <label class="label">Authentication Mode</label>
+                <select class="select" @bind="_settings.AuthMode">
+                    <option value="@AuthenticationMode.SingleKey">Single Key (Public)</option>
+                    <option value="@AuthenticationMode.Hmac">HMAC (AppKey + Secret)</option>
+                    <option value="@AuthenticationMode.None">None</option>
+                </select>
+            </div>
+
+            @if (_settings.AuthMode == AuthenticationMode.SingleKey)
+            {
+                <!-- Single Key -->
+                <div>
+                    <label class="label">Single Key</label>
+                    <input type="password" class="input" @bind="_settings.SingleKey"
+                           placeholder="Enter your single key" />
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Used for public content queries</p>
+                </div>
+            }
+            else if (_settings.AuthMode == AuthenticationMode.Hmac)
+            {
+                <!-- App Key -->
+                <div>
+                    <label class="label">App Key</label>
+                    <input type="text" class="input" @bind="_settings.AppKey"
+                           placeholder="Enter your app key" />
+                </div>
+
+                <!-- Secret -->
+                <div>
+                    <label class="label">Secret</label>
+                    <input type="password" class="input" @bind="_settings.Secret"
+                           placeholder="Enter your secret" />
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Used for HMAC authentication to access draft content</p>
+                </div>
+            }
+
+            <!-- Default Locale -->
+            <div>
+                <label class="label">Default Locale</label>
+                <input type="text" class="input" @bind="_settings.DefaultLocale"
+                       placeholder="en" />
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Default locale for queries (e.g., en, sv, de)</p>
+            </div>
+        </div>
+        </ChildContent>
+        <FooterContent>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    @if (_testResult != null)
+                    {
+                        @if (_testResult.Value.Success)
+                        {
+                            <span class="text-green-600 flex items-center gap-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                @_testResult.Value.Message
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="text-red-600 flex items-center gap-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                @_testResult.Value.Message
+                            </span>
+                        }
+                    }
+                </div>
+                <div class="flex gap-2">
+                    <button class="btn-secondary" @onclick="TestConnection" disabled="@_isTesting">
+                        @if (_isTesting)
+                        {
+                            <span class="flex items-center gap-2">
+                                <span class="spinner w-4 h-4"></span>
+                                Testing...
+                            </span>
+                        }
+                        else
+                        {
+                            <span>Test Connection</span>
+                        }
+                    </button>
+                    <button class="btn-primary" @onclick="SaveSettings" disabled="@_isSaving">
+                        @if (_isSaving)
+                        {
+                            <span class="flex items-center gap-2">
+                                <span class="spinner w-4 h-4"></span>
+                                Saving...
+                            </span>
+                        }
+                        else
+                        {
+                            <span>Save Settings</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </FooterContent>
+    </Card>
+
+    <Card Title="Query Preferences">
+        <ChildContent>
+        <div class="space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="font-medium text-gray-900 dark:text-gray-100">Save Query History</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Store executed queries for quick access</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" class="sr-only peer" @bind="_settings.SaveQueryHistory" />
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:bg-gray-300 dark:after:border-gray-500 peer-checked:bg-opti-blue"></div>
+                </label>
+            </div>
+
+            <div>
+                <label class="label">Max History Items</label>
+                <input type="number" class="input w-32" @bind="_settings.MaxHistoryItems" min="10" max="200" />
+            </div>
+        </div>
+        </ChildContent>
+    </Card>
+
+    <Card Title="Appearance">
+        <ChildContent>
+        <div class="space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="font-medium text-gray-900 dark:text-gray-100">Dark Mode</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Switch to a darker colour scheme</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" class="sr-only peer" @bind="_settings.IsDarkMode" @bind:after="SaveSettings" />
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:bg-gray-300 dark:after:border-gray-500 peer-checked:bg-opti-blue"></div>
+                </label>
+            </div>
+        </div>
+        </ChildContent>
+    </Card>
+
+    <Card Title="About">
+        <ChildContent>
+        <div class="prose text-gray-600 dark:text-gray-300">
+            <p>
+                The Optimizely Graph Learning Centre helps you learn and master GraphQL queries
+                for Optimizely Graph. For documentation, visit:
+            </p>
+            <ul>
+                <li>
+                    <a href="https://docs.developers.optimizely.com/platform-optimizely/docs/graphql-schema"
+                       target="_blank" class="text-opti-blue hover:underline">
+                        Optimizely Graph Documentation
+                    </a>
+                </li>
+                <li>
+                    <a href="https://graphql.org/learn/"
+                       target="_blank" class="text-opti-blue hover:underline">
+                        GraphQL Official Learning Guide
+                    </a>
+                </li>
+            </ul>
+        </div>
+        </ChildContent>
+    </Card>
+</div>
+
+@code {
+    private OptimizelyLearningCentre.Client.Models.Configuration.GraphSettings _settings = new();
+    private bool _isTesting;
+    private bool _isSaving;
+    private (bool Success, string Message)? _testResult;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _settings = await SettingsService.GetSettingsAsync();
+    }
+
+    private async Task TestConnection()
+    {
+        _isTesting = true;
+        _testResult = null;
+        AppState.ConnectionStatus = ConnectionStatus.Testing;
+        StateHasChanged();
+
+        try
+        {
+            // Save settings first so the client uses them
+            await SettingsService.SaveSettingsAsync(_settings);
+
+            _testResult = await GraphQLClient.TestConnectionAsync();
+
+            AppState.ConnectionStatus = _testResult.Value.Success
+                ? ConnectionStatus.Connected
+                : ConnectionStatus.Failed;
+        }
+        catch (Exception ex)
+        {
+            _testResult = (false, ex.Message);
+            AppState.ConnectionStatus = ConnectionStatus.Failed;
+        }
+        finally
+        {
+            _isTesting = false;
+        }
+    }
+
+    private async Task SaveSettings()
+    {
+        _isSaving = true;
+        try
+        {
+            await SettingsService.SaveSettingsAsync(_settings);
+            AppState.ShowSuccess("Settings saved successfully!");
+        }
+        catch (Exception ex)
+        {
+            AppState.ShowError($"Failed to save settings: {ex.Message}");
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+}

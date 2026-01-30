@@ -1,0 +1,210 @@
+@page "/courses/{CourseId}"
+@inject ILearningService LearningService
+@inject ISettingsService SettingsService
+@inject ICourseRegistry CourseRegistry
+@inject ICourseContext CourseContext
+@inject AppState AppState
+@inject NavigationManager Navigation
+
+@if (_course != null)
+{
+    <PageTitle>@_course.Name Learning Centre</PageTitle>
+
+    <div class="max-w-6xl mx-auto space-y-8">
+        <!-- Hero Section -->
+        <div class="rounded-2xl p-8 relative overflow-hidden shadow-lg dark:shadow-none dark:border dark:border-gray-700"
+             style="@GetHeroStyle()">
+            <div class="flex items-start justify-between relative z-10">
+                <div>
+                    <h1 class="text-3xl font-bold mb-2 text-white">Welcome to the @_course.Name Learning Centre</h1>
+                    <p class="text-white dark:text-gray-300 text-lg max-w-2xl">
+                        @_course.LongDescription
+                    </p>
+                </div>
+                <div class="hidden lg:block">
+                    @if (_course.Icon == "bolt")
+                    {
+                        <svg class="w-24 h-24 text-white/20 dark:text-white/10" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    }
+                    else if (_course.Icon == "sparkles")
+                    {
+                        <svg class="w-24 h-24 text-white/20 dark:text-white/10" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                        </svg>
+                    }
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-4 mt-6 relative z-10">
+                @{
+                    var settingsNav = _course.NavItems.FirstOrDefault(n => n.Id == "settings");
+                    var hasSettings = settingsNav != null;
+                }
+                @if (hasSettings && AppState.ConnectionStatus != ConnectionStatus.Connected && _course.Id == "graph")
+                {
+                    <a href="@($"/courses/{CourseId}/settings")" class="btn bg-white hover:bg-gray-100" style="color: @_course.BrandColor">
+                        Configure Connection
+                    </a>
+                }
+                <a href="@($"/courses/{CourseId}/learn")" class="btn bg-white/20 dark:bg-white/10 text-white hover:bg-white/30 dark:hover:bg-white/20 border border-white/30">
+                    Start Learning
+                </a>
+                @foreach (var nav in _course.NavItems.Where(n => n.Category == "Tools").Take(2))
+                {
+                    <a href="@($"/courses/{CourseId}/{nav.Route}")" class="btn bg-transparent text-white border border-white/30 hover:bg-white/10">
+                        @nav.Title
+                    </a>
+                }
+            </div>
+        </div>
+
+        <!-- Learning Modules Grid -->
+        <div>
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Learning Modules</h2>
+                <a href="@($"/courses/{CourseId}/learn")" class="text-opti-blue dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium">
+                    View all →
+                </a>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                @foreach (var module in _modules.Take(6))
+                {
+                    <a href="@($"/courses/{CourseId}/learn/{module.Id}")" class="card hover:shadow-lg transition-shadow group">
+                        <div class="card-body">
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
+                                     style="background-color: @(_course.BrandColor)15">
+                                    <svg class="w-5 h-5" style="color: @_course.BrandColor" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                                    </svg>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-opti-blue dark:group-hover:text-blue-400 transition-colors">
+                                        @module.Title
+                                    </h3>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                                        @module.Description
+                                    </p>
+                                    <div class="flex items-center gap-3 mt-3">
+                                        <Badge Variant="@GetDifficultyBadge(module.Difficulty)">
+                                            @module.Difficulty.ToString()
+                                        </Badge>
+                                        <span class="text-xs text-gray-400 dark:text-gray-500">
+                                            @module.Lessons.Count lessons
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                }
+            </div>
+        </div>
+
+        <!-- Quick Actions - Only show if course has tools -->
+        @if (_course.NavItems.Any(n => n.Category == "Tools"))
+        {
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                @foreach (var tool in _course.NavItems.Where(n => n.Category == "Tools").Take(2))
+                {
+                    <Card Title="@tool.Title">
+                        <ChildContent>
+                            <p class="text-gray-600 dark:text-gray-400 mb-4">
+                                @GetToolDescription(tool.Id)
+                            </p>
+                            <a href="@($"/courses/{CourseId}/{tool.Route}")" class="btn-primary inline-flex items-center gap-2">
+                                Open @tool.Title
+                            </a>
+                        </ChildContent>
+                    </Card>
+                }
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="flex items-center justify-center h-64">
+        <LoadingSpinner Message="Loading course..." />
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string CourseId { get; set; } = string.Empty;
+
+    private CourseDefinition? _course;
+    private List<LearningModule> _modules = new();
+    private bool _isDarkMode;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _course = CourseRegistry.GetCourse(CourseId);
+
+        if (_course == null)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        CourseContext.SetCurrentCourse(_course);
+
+        var settings = await SettingsService.GetSettingsAsync();
+        _isDarkMode = settings.IsDarkMode;
+
+        _modules = await LearningService.GetModulesAsync();
+
+        // Check connection status for Graph course
+        if (_course.Id == "graph")
+        {
+            if (!string.IsNullOrEmpty(settings.SingleKey) || !string.IsNullOrEmpty(settings.AppKey))
+            {
+                AppState.ConnectionStatus = ConnectionStatus.Unknown;
+            }
+        }
+    }
+
+    private BadgeVariant GetDifficultyBadge(ModuleDifficulty difficulty) => difficulty switch
+    {
+        ModuleDifficulty.Beginner => BadgeVariant.Success,
+        ModuleDifficulty.Intermediate => BadgeVariant.Warning,
+        ModuleDifficulty.Advanced => BadgeVariant.Danger,
+        _ => BadgeVariant.Default
+    };
+
+    private string GetLighterColor(string color)
+    {
+        // Simple color lightening for gradient effect
+        return color switch
+        {
+            "#0037FF" => "#3366FF",
+            "#00D4AA" => "#33E0BB",
+            _ => color
+        };
+    }
+
+    private string GetToolDescription(string toolId) => toolId switch
+    {
+        "query-builder" => "Build GraphQL queries visually without writing code. Select content types, add filters, configure sorting, and see the generated query in real-time.",
+        "playground" => "Write and execute raw GraphQL queries directly. Perfect for testing complex queries, exploring the schema, and experimenting with advanced features.",
+        _ => "Explore this tool to enhance your learning experience."
+    };
+
+    private string GetHeroStyle()
+    {
+        if (_course == null) return "";
+
+        if (_isDarkMode)
+        {
+            // Dark mode: use a dark gray background with brand color accent on left border
+            return $"background: linear-gradient(135deg, #1f2937 0%, #111827 100%); border-left: 4px solid {_course.BrandColor}";
+        }
+        else
+        {
+            // Light mode: use the brand color gradient
+            return $"background: linear-gradient(to right, {_course.BrandColor}, {GetLighterColor(_course.BrandColor)})";
+        }
+    }
+}

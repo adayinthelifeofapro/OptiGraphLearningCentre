@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd D:ProjectsOptimizelyOpti Opal Learning Centre)",
+      "Bash(dotnet build:*)",
+      "Bash(git mv:*)",
+      "Bash(powershell -Command \"Rename-Item -Path ''OptiGraphLearningCentre.Client'' -NewName ''OptimizelyLearningCentre.Client'' -Force\")",
+      "Bash(powershell -Command:*)",
+      "Bash(robocopy:*)",
+      "Bash(find:*)",
+      "Bash(git add:*)",
+      "Bash(git rm:*)",
+      "Bash(tree:*)"
+    ]
+  }
+}

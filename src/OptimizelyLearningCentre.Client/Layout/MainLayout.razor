@@ -1,0 +1,189 @@
+@inherits LayoutComponentBase
+@inject AppState AppState
+@inject ISettingsService SettingsService
+@inject ICourseContext CourseContext
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<div class="@RootClass">
+    <!-- Top Navigation Bar -->
+    <nav class="bg-opti-dark text-white shadow-lg flex-shrink-0 z-50">
+        <div class="max-w-full mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-4">
+                    <button @onclick="ToggleSidebar" class="p-2 hover:bg-gray-700 rounded-lg transition-colors" title="Toggle sidebar">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <a href="@(_currentCourse != null ? $"/courses/{_currentCourse.Id}" : "/")" class="flex items-center gap-3 hover:opacity-90 transition-opacity">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background-color: @BrandColor">
+                            @if (_currentCourse != null)
+                            {
+                                @GetCourseIcon(_currentCourse.Icon)
+                            }
+                            else
+                            {
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                                </svg>
+                            }
+                        </div>
+                        <div>
+                            <h1 class="text-lg font-semibold leading-tight">@(_currentCourse?.Name ?? "Optimizely")</h1>
+                            <p class="text-xs text-gray-400">Learning Centre</p>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <!-- Dark Mode Toggle -->
+                    <button @onclick="ToggleDarkMode" class="p-2 hover:bg-gray-700 rounded-lg transition-colors" title="@(_isDarkMode ? "Switch to light mode" : "Switch to dark mode")">
+                        @if (_isDarkMode)
+                        {
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                            </svg>
+                        }
+                        else
+                        {
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                            </svg>
+                        }
+                    </button>
+
+                    @* Connection Status - only show for Graph course which has connection settings *@
+                    @if (_currentCourse?.Id == "graph")
+                    {
+                        <ConnectionIndicator Status="@AppState.ConnectionStatus" />
+                    }
+
+                    @* Settings Link - course-specific or global *@
+                    @if (_currentCourse != null)
+                    {
+                        <a href="@($"/courses/{_currentCourse.Id}/settings")" class="p-2 hover:bg-gray-700 rounded-lg transition-colors" title="Settings">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex flex-1 overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="@SidebarClass bg-white dark:bg-gray-800 shadow-lg flex-shrink-0 overflow-y-auto transition-all duration-300 border-r border-gray-200 dark:border-gray-700">
+            <NavMenu />
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
+            <!-- Global Messages -->
+            @if (!string.IsNullOrEmpty(AppState.ErrorMessage))
+            {
+                <div class="mb-4 alert-error flex items-center justify-between">
+                    <span>@AppState.ErrorMessage</span>
+                    <button @onclick="() => AppState.ClearMessages()" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(AppState.SuccessMessage))
+            {
+                <div class="mb-4 alert-success flex items-center justify-between">
+                    <span>@AppState.SuccessMessage</span>
+                    <button @onclick="() => AppState.ClearMessages()" class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            }
+
+            @Body
+        </main>
+    </div>
+</div>
+
+@code {
+    private bool _isDarkMode;
+    private CourseDefinition? _currentCourse;
+
+    private string RootClass => _isDarkMode
+        ? "dark min-h-screen bg-gray-900 flex flex-col"
+        : "min-h-screen bg-gray-50 flex flex-col";
+
+    private string SidebarClass => AppState.IsSidebarOpen
+        ? "w-64"
+        : "w-0 overflow-hidden";
+
+    private string BrandColor => _currentCourse?.BrandColor ?? "#0037FF";
+
+    protected override async Task OnInitializedAsync()
+    {
+        AppState.PropertyChanged += OnStateChanged;
+        SettingsService.OnSettingsChanged += OnSettingsChanged;
+        CourseContext.OnCourseChanged += OnCourseChanged;
+
+        _currentCourse = CourseContext.CurrentCourse;
+
+        var settings = await SettingsService.GetSettingsAsync();
+        _isDarkMode = settings.IsDarkMode;
+    }
+
+    private void ToggleSidebar()
+    {
+        AppState.ToggleSidebar();
+    }
+
+    private async Task ToggleDarkMode()
+    {
+        _isDarkMode = !_isDarkMode;
+        var settings = await SettingsService.GetSettingsAsync();
+        settings.IsDarkMode = _isDarkMode;
+        await SettingsService.SaveSettingsAsync(settings);
+    }
+
+    private void OnStateChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async void OnSettingsChanged(GraphSettings settings)
+    {
+        _isDarkMode = settings.IsDarkMode;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void OnCourseChanged(CourseDefinition? course)
+    {
+        _currentCourse = course;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private RenderFragment GetCourseIcon(string icon) => icon switch
+    {
+        "bolt" => @<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>,
+        "sparkles" => @<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+        </svg>,
+        _ => @<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+        </svg>
+    };
+
+    public void Dispose()
+    {
+        AppState.PropertyChanged -= OnStateChanged;
+        SettingsService.OnSettingsChanged -= OnSettingsChanged;
+        CourseContext.OnCourseChanged -= OnCourseChanged;
+    }
+}

@@ -4,22 +4,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Optimizely Graph Learning Centre is a **Blazor WebAssembly (WASM)** interactive learning platform for Optimizely Graph, a GraphQL API service for content management. This is a client-side only application with no backend server.
+Optimizely Learning Centre is a **Blazor WebAssembly (WASM)** interactive multi-course learning platform for Optimizely products including Graph (GraphQL API) and Opal (AI-assisted content). This is a client-side only application with no backend server.
 
 ## Build Commands
 
 ```bash
 # Build the application
-dotnet build src/OptiGraphLearningCentre.Client/OptiGraphLearningCentre.Client.csproj
+dotnet build src/OptimizelyLearningCentre.Client/OptimizelyLearningCentre.Client.csproj
 
 # Run the application (HTTP: localhost:5000, HTTPS: localhost:7168)
-dotnet run --project src/OptiGraphLearningCentre.Client/OptiGraphLearningCentre.Client.csproj
+dotnet run --project src/OptimizelyLearningCentre.Client/OptimizelyLearningCentre.Client.csproj
 
 # Build Tailwind CSS (minified for production)
-cd src/OptiGraphLearningCentre.Client && npm run css:build
+cd src/OptimizelyLearningCentre.Client && npm run css:build
 
 # Watch Tailwind CSS (development mode)
-cd src/OptiGraphLearningCentre.Client && npm run css:watch
+cd src/OptimizelyLearningCentre.Client && npm run css:watch
 ```
 
 **No test framework is currently configured.**

@@ -1,0 +1,429 @@
+@page "/courses/{CourseId}/learn/{ModuleId}"
+@page "/courses/{CourseId}/learn/{ModuleId}/{LessonId}"
+@inject ILearningService LearningService
+@inject ICourseRegistry CourseRegistry
+@inject ICourseContext CourseContext
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+@if (_course != null)
+{
+    <PageTitle>@(_module?.Title ?? "Loading...") - @_course.Name Learning Centre</PageTitle>
+}
+
+@if (_isLoading)
+{
+    <div class="flex items-center justify-center min-h-[400px]">
+        <LoadingSpinner Message="Loading module..." />
+    </div>
+}
+else if (_module == null)
+{
+    <div class="text-center py-12">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Module not found</h2>
+        <p class="text-gray-600 dark:text-gray-400 mt-2">The requested module could not be found.</p>
+        <a href="@($"/courses/{CourseId}/learn")" class="btn-primary mt-4 inline-block">Back to Modules</a>
+    </div>
+}
+else if (_course != null)
+{
+    <div class="max-w-6xl mx-auto">
+        <!-- Breadcrumb -->
+        <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-4">
+            <a href="@($"/courses/{CourseId}/learn")" class="hover:text-opti-blue dark:hover:text-blue-400">Learning Centre</a>
+            <span>/</span>
+            <span class="text-gray-900 dark:text-gray-100">@_module.Title</span>
+            @if (_currentLesson != null)
+            {
+                <span>/</span>
+                <span class="text-gray-900 dark:text-gray-100">@_currentLesson.Title</span>
+            }
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Sidebar - Lessons List -->
+            <aside class="lg:col-span-1">
+                <Card Title="Lessons">
+                    <ChildContent>
+                    <nav class="space-y-1 -mx-2">
+                        @foreach (var lesson in _module.Lessons.OrderBy(l => l.Order))
+                        {
+                            var isActive = lesson.Id == _currentLesson?.Id;
+                            var isCompleted = _progress?.CompletedLessons.TryGetValue(lesson.Id, out var p) == true && p.IsCompleted;
+                            var isUnlocked = _unlockedLessons.TryGetValue(lesson.Id, out var unlocked) && unlocked;
+
+                            @if (isUnlocked)
+                            {
+                                <a href="@($"/courses/{CourseId}/learn/{_module.Id}/{lesson.Id}")"
+                                   class="@(isActive ? "text-white" : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700") flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors"
+                                   style="@(isActive ? $"background-color: {_course.BrandColor}" : "")">
+                                    <span class="flex items-start gap-2">
+                                        @if (isCompleted)
+                                        {
+                                            <svg class="w-4 h-4 mt-0.5 flex-shrink-0 @(isActive ? "text-white" : "text-green-500 dark:text-green-400")" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                            </svg>
+                                        }
+                                        else
+                                        {
+                                            <span class="w-4 h-4 mt-0.5 flex-shrink-0 rounded-full border-2 @(isActive ? "border-white" : "border-gray-300 dark:border-gray-500")"></span>
+                                        }
+                                        <span>@lesson.Title</span>
+                                    </span>
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="flex items-center justify-between px-3 py-2 rounded-lg text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                                      title="Complete the previous lesson to unlock">
+                                    <span class="flex items-start gap-2">
+                                        <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                        </svg>
+                                        <span>@lesson.Title</span>
+                                    </span>
+                                </span>
+                            }
+                        }
+                    </nav>
+                    </ChildContent>
+                </Card>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="lg:col-span-3 space-y-6">
+                @if (_currentLesson != null)
+                {
+                    <!-- Lesson Header -->
+                    <Card>
+                        <ChildContent>
+                        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">@_currentLesson.Title</h1>
+                        <p class="text-gray-600 dark:text-gray-400">@_currentLesson.Summary</p>
+
+                        @if (_currentLesson.LearningObjectives.Any())
+                        {
+                            <div class="mt-4 p-4 rounded-lg border"
+                                 style="background-color: @(_course.BrandColor)10; border-color: @(_course.BrandColor)30">
+                                <h3 class="text-sm font-semibold mb-2" style="color: @_course.BrandColor">Learning Objectives</h3>
+                                <ul class="space-y-1">
+                                    @foreach (var objective in _currentLesson.LearningObjectives)
+                                    {
+                                        <li class="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                            <svg class="w-4 h-4 mt-0.5 flex-shrink-0" style="color: @_course.BrandColor" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                            @objective
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+                        </ChildContent>
+                    </Card>
+
+                    <!-- Lesson Content -->
+                    <Card>
+                        <ChildContent>
+                        <div class="prose dark:prose-invert max-w-none">
+                            @((MarkupString)_currentLesson.Content)
+                        </div>
+                        </ChildContent>
+                    </Card>
+
+                    <!-- Examples - Use DynamicComponent for course-specific panel -->
+                    @foreach (var example in _currentLesson.Examples)
+                    {
+                        var isLastExample = example.Id == _currentLesson.Examples.LastOrDefault()?.Id;
+                        <Card Title="@example.Title">
+                            <ChildContent>
+                            <p class="text-gray-600 dark:text-gray-400 mb-4">@example.Description</p>
+                            <DynamicComponent Type="@_course.InteractivePanelType"
+                                              Parameters="@(GetExampleParameters(example, isLastExample))" />
+                            </ChildContent>
+                        </Card>
+                    }
+
+                    <!-- Scroll detection marker -->
+                    <div id="lesson-end-marker" class="h-1"></div>
+
+                    <!-- Navigation -->
+                    <div class="flex items-center justify-between pt-4">
+                        @if (!string.IsNullOrEmpty(_currentLesson.PreviousLessonId))
+                        {
+                            var isPrevUnlocked = _unlockedLessons.TryGetValue(_currentLesson.PreviousLessonId, out var prevUnlocked) && prevUnlocked;
+                            @if (isPrevUnlocked)
+                            {
+                                <a href="@($"/courses/{CourseId}/learn/{_module.Id}/{_currentLesson.PreviousLessonId}")"
+                                   class="btn-secondary flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                    </svg>
+                                    Previous
+                                </a>
+                            }
+                            else
+                            {
+                                <div></div>
+                            }
+                        }
+                        else
+                        {
+                            <div></div>
+                        }
+
+                        <div class="flex gap-2">
+                            @if (!string.IsNullOrEmpty(_currentLesson.NextLessonId))
+                            {
+                                @if (_isCurrentLessonComplete)
+                                {
+                                    <a href="@($"/courses/{CourseId}/learn/{_module.Id}/{_currentLesson.NextLessonId}")"
+                                       class="btn-primary flex items-center gap-2">
+                                        Next
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                        </svg>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="btn-primary flex items-center gap-2 opacity-50 cursor-not-allowed"
+                                          title="Scroll to the bottom to complete this lesson">
+                                        Next
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                        </svg>
+                                    </span>
+                                }
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <!-- Module Overview -->
+                    <Card>
+                        <ChildContent>
+                        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">@_module.Title</h1>
+                        <p class="text-gray-600 dark:text-gray-400 mb-4">@_module.Description</p>
+
+                        <div class="flex items-center gap-4">
+                            <Badge Variant="@GetDifficultyBadge(_module.Difficulty)">
+                                @_module.Difficulty.ToString()
+                            </Badge>
+                            <span class="text-sm text-gray-500 dark:text-gray-400">
+                                @_module.Lessons.Count lessons
+                            </span>
+                            <span class="text-sm text-gray-500 dark:text-gray-400">
+                                ~@_module.EstimatedMinutes min
+                            </span>
+                        </div>
+                        </ChildContent>
+                    </Card>
+
+                    @if (_module.Lessons.Any())
+                    {
+                        <a href="@($"/courses/{CourseId}/learn/{_module.Id}/{_module.Lessons.First().Id}")"
+                           class="btn-primary inline-flex items-center gap-2">
+                            Start Learning
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                            </svg>
+                        </a>
+                    }
+                }
+            </main>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string CourseId { get; set; } = string.Empty;
+
+    [Parameter]
+    public string? ModuleId { get; set; }
+
+    [Parameter]
+    public string? LessonId { get; set; }
+
+    private CourseDefinition? _course;
+    private LearningModule? _module;
+    private Lesson? _currentLesson;
+    private UserProgress? _progress;
+    private bool _isLoading = true;
+    private bool _isCurrentLessonComplete;
+    private EventCallback _onExampleCompletedCallback;
+    private Dictionary<string, bool> _unlockedLessons = new();
+    private DotNetObjectReference<Module>? _dotNetRef;
+    private bool _scrollObserverInitialized;
+
+    protected override void OnInitialized()
+    {
+        _onExampleCompletedCallback = EventCallback.Factory.Create(this, OnLastExampleCompleted);
+        _dotNetRef = DotNetObjectReference.Create(this);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _scrollObserverInitialized = false;
+        await LoadData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_currentLesson != null && !_isCurrentLessonComplete && !_scrollObserverInitialized)
+        {
+            _scrollObserverInitialized = true;
+            await JSRuntime.InvokeVoidAsync("scrollInterop.observeElement", "lesson-end-marker", _dotNetRef);
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnScrolledToBottom()
+    {
+        if (_currentLesson != null && !_isCurrentLessonComplete)
+        {
+            await LearningService.MarkLessonCompleteAsync(_currentLesson.Id);
+            _progress = await LearningService.GetUserProgressAsync();
+            _isCurrentLessonComplete = true;
+            await RefreshUnlockedLessons();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadData()
+    {
+        _isLoading = true;
+
+        _course = CourseRegistry.GetCourse(CourseId);
+        if (_course == null)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        CourseContext.SetCurrentCourse(_course);
+
+        if (!string.IsNullOrEmpty(ModuleId))
+        {
+            _module = await LearningService.GetModuleAsync(ModuleId);
+
+            // Check if module is unlocked
+            if (_module != null)
+            {
+                var isUnlocked = await LearningService.IsModuleUnlockedAsync(_module.Id);
+                if (!isUnlocked)
+                {
+                    // Redirect to Learn index if module is locked
+                    Navigation.NavigateTo($"/courses/{CourseId}/learn");
+                    return;
+                }
+
+                // Load unlocked status for all lessons
+                await RefreshUnlockedLessons();
+            }
+
+            _progress = await LearningService.GetUserProgressAsync();
+
+            if (!string.IsNullOrEmpty(LessonId))
+            {
+                _currentLesson = _module?.Lessons.FirstOrDefault(l => l.Id == LessonId);
+
+                // Check if trying to access a locked lesson
+                if (_currentLesson != null && _module != null)
+                {
+                    var isLessonUnlocked = _unlockedLessons.TryGetValue(_currentLesson.Id, out var unlocked) && unlocked;
+                    if (!isLessonUnlocked)
+                    {
+                        // Redirect to the first unlocked lesson or module overview
+                        var firstUnlockedLesson = _module.Lessons
+                            .OrderBy(l => l.Order)
+                            .FirstOrDefault(l => _unlockedLessons.TryGetValue(l.Id, out var u) && u);
+
+                        if (firstUnlockedLesson != null)
+                        {
+                            Navigation.NavigateTo($"/courses/{CourseId}/learn/{_module.Id}/{firstUnlockedLesson.Id}");
+                        }
+                        else
+                        {
+                            Navigation.NavigateTo($"/courses/{CourseId}/learn/{_module.Id}");
+                        }
+                        return;
+                    }
+                }
+            }
+            else
+            {
+                _currentLesson = null;
+            }
+
+            // Check if current lesson is complete
+            if (_currentLesson != null)
+            {
+                _isCurrentLessonComplete = _progress?.CompletedLessons.TryGetValue(_currentLesson.Id, out var p) == true && p.IsCompleted;
+            }
+            else
+            {
+                _isCurrentLessonComplete = false;
+            }
+        }
+
+        _isLoading = false;
+    }
+
+    private async Task RefreshUnlockedLessons()
+    {
+        if (_module == null) return;
+
+        _unlockedLessons.Clear();
+        foreach (var lesson in _module.Lessons)
+        {
+            var isUnlocked = await LearningService.IsLessonUnlockedAsync(_module.Id, lesson.Id);
+            _unlockedLessons[lesson.Id] = isUnlocked;
+        }
+    }
+
+    private async Task OnLastExampleCompleted()
+    {
+        if (_currentLesson != null && !_isCurrentLessonComplete)
+        {
+            await LearningService.MarkLessonCompleteAsync(_currentLesson.Id);
+            _progress = await LearningService.GetUserProgressAsync();
+            _isCurrentLessonComplete = true;
+            await RefreshUnlockedLessons();
+            StateHasChanged();
+        }
+    }
+
+    private Dictionary<string, object> GetExampleParameters(LessonExample example, bool isLastExample)
+    {
+        return new Dictionary<string, object>
+        {
+            ["Example"] = example,
+            ["IsLastExample"] = isLastExample,
+            ["OnQueryExecutedSuccessfully"] = _onExampleCompletedCallback
+        };
+    }
+
+    private BadgeVariant GetDifficultyBadge(ModuleDifficulty difficulty) => difficulty switch
+    {
+        ModuleDifficulty.Beginner => BadgeVariant.Success,
+        ModuleDifficulty.Intermediate => BadgeVariant.Warning,
+        ModuleDifficulty.Advanced => BadgeVariant.Danger,
+        _ => BadgeVariant.Default
+    };
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("scrollInterop.dispose", "lesson-end-marker");
+        }
+        catch
+        {
+            // Ignore errors during disposal
+        }
+        _dotNetRef?.Dispose();
+    }
+}

@@ -1,0 +1,216 @@
+@page "/courses/graph/playground"
+@inject IGraphQLClient GraphQLClient
+@inject QueryState QueryState
+
+<PageTitle>GraphQL Playground - Optimizely Graph Learning Centre</PageTitle>
+
+<div class="h-[calc(100vh-8rem)]">
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">GraphQL Playground</h1>
+            <p class="text-gray-600 text-sm">Write and execute raw GraphQL queries</p>
+        </div>
+        <div class="flex gap-2">
+            <button class="btn-secondary" @onclick="FormatQuery">
+                Format
+            </button>
+            <button class="btn-primary" @onclick="ExecuteQuery" disabled="@_isExecuting">
+                @if (_isExecuting)
+                {
+                    <span class="flex items-center gap-2">
+                        <span class="spinner w-4 h-4"></span>
+                        Running...
+                    </span>
+                }
+                else
+                {
+                    <span class="flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Run (Ctrl+Enter)
+                    </span>
+                }
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 h-[calc(100%-4rem)]">
+        <!-- Query Editor -->
+        <div class="flex flex-col">
+            <div class="flex items-center justify-between bg-gray-800 text-gray-300 px-4 py-2 rounded-t-lg">
+                <span class="text-sm font-medium">Query</span>
+                <div class="flex gap-2">
+                    <button @onclick="LoadSampleQuery" class="text-xs text-gray-400 hover:text-white">
+                        Load Sample
+                    </button>
+                    <button @onclick="ClearQuery" class="text-xs text-gray-400 hover:text-white">
+                        Clear
+                    </button>
+                </div>
+            </div>
+            <textarea @bind="_query" @onkeydown="HandleKeyDown"
+                      class="flex-1 w-full p-4 font-mono text-sm bg-gray-900 text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-opti-blue rounded-b-lg"
+                      placeholder="Enter your GraphQL query here..."
+                      spellcheck="false"></textarea>
+        </div>
+
+        <!-- Results -->
+        <div class="flex flex-col">
+            <div class="flex items-center justify-between bg-gray-800 text-gray-300 px-4 py-2 rounded-t-lg">
+                <span class="text-sm font-medium">Results</span>
+                @if (!string.IsNullOrEmpty(_response))
+                {
+                    <span class="text-xs text-gray-400">@_executionTime</span>
+                }
+            </div>
+            <div class="flex-1 bg-gray-900 text-gray-100 rounded-b-lg overflow-auto">
+                @if (_isExecuting)
+                {
+                    <div class="flex items-center justify-center h-full">
+                        <LoadingSpinner Message="Executing query..." />
+                    </div>
+                }
+                else if (string.IsNullOrEmpty(_response))
+                {
+                    <div class="flex items-center justify-center h-full text-gray-500">
+                        <div class="text-center">
+                            <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <p>Results will appear here</p>
+                            <p class="text-sm mt-1">Press Ctrl+Enter to run</p>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <pre class="p-4 font-mono text-sm whitespace-pre-wrap">@_response</pre>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Query History -->
+    @if (QueryState.History.Any())
+    {
+        <div class="mt-4">
+            <h3 class="text-sm font-medium text-gray-700 mb-2">Recent Queries</h3>
+            <div class="flex gap-2 overflow-x-auto pb-2">
+                @foreach (var item in QueryState.History.Take(5))
+                {
+                    <button @onclick="() => LoadFromHistory(item)"
+                            class="flex-shrink-0 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded text-sm text-left max-w-xs truncate">
+                        <span class="@(item.Success ? "text-green-600" : "text-red-600")">●</span>
+                        @item.ShortQuery
+                    </button>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private string _query = @"{
+  _Content(limit: 5) {
+    items {
+      _metadata {
+        key
+        displayName
+        types
+      }
+    }
+    total
+  }
+}";
+
+    private string _response = string.Empty;
+    private string _executionTime = string.Empty;
+    private bool _isExecuting;
+
+    private async Task ExecuteQuery()
+    {
+        if (string.IsNullOrWhiteSpace(_query))
+            return;
+
+        _isExecuting = true;
+        StateHasChanged();
+
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+        try
+        {
+            var request = new GraphQLRequest { Query = _query };
+            var response = await GraphQLClient.ExecuteAsync(request);
+
+            stopwatch.Stop();
+            _executionTime = $"{stopwatch.ElapsedMilliseconds}ms";
+
+            _response = System.Text.Json.JsonSerializer.Serialize(
+                response,
+                new System.Text.Json.JsonSerializerOptions { WriteIndented = true }
+            );
+
+            QueryState.AddToHistory(_query, _response, !response.HasErrors);
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            _executionTime = $"{stopwatch.ElapsedMilliseconds}ms (error)";
+
+            _response = System.Text.Json.JsonSerializer.Serialize(
+                new { error = ex.Message },
+                new System.Text.Json.JsonSerializerOptions { WriteIndented = true }
+            );
+
+            QueryState.AddToHistory(_query, _response, false);
+        }
+        finally
+        {
+            _isExecuting = false;
+        }
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.CtrlKey && e.Key == "Enter")
+        {
+            _ = ExecuteQuery();
+        }
+    }
+
+    private void FormatQuery()
+    {
+        // Simple formatting - proper implementation would use a GraphQL parser
+        _query = _query.Trim();
+    }
+
+    private void ClearQuery()
+    {
+        _query = string.Empty;
+        _response = string.Empty;
+    }
+
+    private void LoadSampleQuery()
+    {
+        _query = @"{
+  _Content(limit: 5) {
+    items {
+      _metadata {
+        key
+        displayName
+        types
+      }
+    }
+    total
+  }
+}";
+    }
+
+    private void LoadFromHistory(QueryHistoryItem item)
+    {
+        _query = item.Query;
+        _response = item.Response;
+    }
+}

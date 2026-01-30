@@ -1,0 +1,143 @@
+@page "/"
+@inject ICourseRegistry CourseRegistry
+@inject ICourseContext CourseContext
+
+<PageTitle>Optimizely Learning Centre</PageTitle>
+
+<div class="max-w-6xl mx-auto space-y-8">
+    <!-- Hero Section -->
+    <div class="text-center py-12">
+        <div class="mb-6">
+            <svg class="w-16 h-16 mx-auto text-opti-blue dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+            </svg>
+        </div>
+        <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            Optimizely Learning Centre
+        </h1>
+        <p class="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            Interactive learning experiences for Optimizely products.
+            Choose a course to get started.
+        </p>
+    </div>
+
+    <!-- Course Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        @foreach (var course in _courses)
+        {
+            <a href="@($"/courses/{course.Id}")"
+               class="group block bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-all duration-300"
+               style="border-top: 4px solid @course.BrandColor">
+                <div class="p-6">
+                    <div class="flex items-start gap-4">
+                        <div class="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 bg-gray-100 dark:bg-gray-700">
+                            @if (course.Icon == "bolt")
+                            {
+                                <svg class="w-7 h-7" style="color: @course.BrandColor" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                            }
+                            else if (course.Icon == "sparkles")
+                            {
+                                <svg class="w-7 h-7" style="color: @course.BrandColor" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                                </svg>
+                            }
+                            else
+                            {
+                                <svg class="w-7 h-7" style="color: @course.BrandColor" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                                </svg>
+                            }
+                        </div>
+                        <div class="flex-1">
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 group-hover:text-opti-blue dark:group-hover:text-blue-400 transition-colors">
+                                @course.Name
+                            </h2>
+                            <p class="text-gray-600 dark:text-gray-400 mt-1">
+                                @course.Description
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                        <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                            @{
+                                var navCount = course.NavItems.Count(n => n.Category == "Tools");
+                            }
+                            @if (navCount > 0)
+                            {
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                                    </svg>
+                                    @navCount Tools
+                                </span>
+                            }
+                        </div>
+                        <span class="text-opti-blue dark:text-blue-400 font-medium group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                            Start Learning
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+            </a>
+        }
+    </div>
+
+    <!-- Features Section -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-8 mt-8 border border-gray-200 dark:border-gray-700">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 text-center mb-8">
+            Interactive Learning Experience
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="text-center">
+                <div class="w-12 h-12 mx-auto bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-opti-blue dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">Structured Modules</h3>
+                <p class="text-gray-600 dark:text-gray-400 text-sm">
+                    Progress through carefully designed lessons from beginner to advanced
+                </p>
+            </div>
+            <div class="text-center">
+                <div class="w-12 h-12 mx-auto bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">Interactive Examples</h3>
+                <p class="text-gray-600 dark:text-gray-400 text-sm">
+                    Learn by doing with hands-on examples you can run directly
+                </p>
+            </div>
+            <div class="text-center">
+                <div class="w-12 h-12 mx-auto bg-purple-100 dark:bg-purple-900/50 rounded-lg flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">Track Progress</h3>
+                <p class="text-gray-600 dark:text-gray-400 text-sm">
+                    Mark lessons complete and track your learning journey
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private IReadOnlyList<CourseDefinition> _courses = Array.Empty<CourseDefinition>();
+
+    protected override void OnInitialized()
+    {
+        // Clear the current course context when viewing the catalog
+        CourseContext.SetCurrentCourse(null);
+        _courses = CourseRegistry.GetAllCourses();
+    }
+}

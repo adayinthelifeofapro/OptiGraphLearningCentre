@@ -1,0 +1,233 @@
+@page "/courses/{CourseId}/learn"
+@inject ILearningService LearningService
+@inject ICourseRegistry CourseRegistry
+@inject ICourseContext CourseContext
+@inject NavigationManager Navigation
+
+@if (_course != null)
+{
+    <PageTitle>Learn - @_course.Name Learning Centre</PageTitle>
+
+    <div class="max-w-6xl mx-auto space-y-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Learning Modules</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">
+                Master @_course.Name through structured lessons and hands-on examples
+            </p>
+        </div>
+
+        <!-- Progress Overview -->
+        @if (_progress != null && _modules.Any())
+        {
+            <Card>
+                <ChildContent>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Your Progress</p>
+                        <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                            @_completedLessons / @_totalLessons lessons completed
+                        </p>
+                    </div>
+                    <div class="w-48">
+                        <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-1">
+                            <span>Progress</span>
+                            <span>@_progressPercentage.ToString("F0")%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div class="h-2 rounded-full transition-all duration-500"
+                                 style="width: @(_progressPercentage)%; background-color: @_course.BrandColor"></div>
+                        </div>
+                    </div>
+                </div>
+                </ChildContent>
+            </Card>
+        }
+
+        <!-- Modules Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            @foreach (var module in _modules)
+            {
+                var isUnlocked = _moduleUnlocked.GetValueOrDefault(module.Id, true);
+                var prevModuleName = _modulePreviousName.GetValueOrDefault(module.Id, "");
+
+                @if (isUnlocked)
+                {
+                    <a href="@($"/courses/{CourseId}/learn/{module.Id}")" class="card hover:shadow-lg transition-all duration-200 group">
+                        <div class="card-body">
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors"
+                                     style="background-color: @(_course.BrandColor)15">
+                                    <svg class="w-6 h-6" style="color: @_course.BrandColor" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-opti-blue dark:group-hover:text-blue-400 transition-colors">
+                                            @module.Title
+                                        </h3>
+                                        <Badge Variant="@GetDifficultyBadge(module.Difficulty)">
+                                            @module.Difficulty.ToString()
+                                        </Badge>
+                                    </div>
+                                    <p class="text-gray-600 dark:text-gray-400 text-sm mb-3">
+                                        @module.Description
+                                    </p>
+                                    <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                                        <span class="flex items-center gap-1">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                                            </svg>
+                                            @module.Lessons.Count lessons
+                                        </span>
+                                        <span class="flex items-center gap-1">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                            ~@module.EstimatedMinutes min
+                                        </span>
+                                    </div>
+
+                                    @{
+                                        var moduleCompletion = GetModuleCompletion(module);
+                                    }
+                                    @if (moduleCompletion > 0)
+                                    {
+                                        <div class="mt-3">
+                                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                                <div class="bg-green-500 h-1.5 rounded-full transition-all duration-500"
+                                                     style="width: @moduleCompletion%"></div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                }
+                else
+                {
+                    <div class="card opacity-60 cursor-not-allowed relative" title="Complete @prevModuleName first">
+                        <!-- Lock icon overlay -->
+                        <div class="absolute top-4 right-4 z-10">
+                            <svg class="w-5 h-5 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="card-body">
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-gray-100 dark:bg-gray-700">
+                                    <svg class="w-6 h-6 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                            @module.Title
+                                        </h3>
+                                        <Badge Variant="@GetDifficultyBadge(module.Difficulty)">
+                                            @module.Difficulty.ToString()
+                                        </Badge>
+                                    </div>
+                                    <p class="text-gray-600 dark:text-gray-400 text-sm mb-3">
+                                        @module.Description
+                                    </p>
+                                    <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                                        <span class="flex items-center gap-1">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                                            </svg>
+                                            @module.Lessons.Count lessons
+                                        </span>
+                                        <span class="flex items-center gap-1">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                            ~@module.EstimatedMinutes min
+                                        </span>
+                                    </div>
+                                    <p class="mt-3 text-sm text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                        </svg>
+                                        Complete "@prevModuleName" to unlock
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string CourseId { get; set; } = string.Empty;
+
+    private CourseDefinition? _course;
+    private List<LearningModule> _modules = new();
+    private UserProgress? _progress;
+    private int _completedLessons;
+    private int _totalLessons;
+    private double _progressPercentage;
+    private Dictionary<string, bool> _moduleUnlocked = new();
+    private Dictionary<string, string> _modulePreviousName = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _course = CourseRegistry.GetCourse(CourseId);
+
+        if (_course == null)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        CourseContext.SetCurrentCourse(_course);
+
+        _modules = await LearningService.GetModulesAsync();
+        _progress = await LearningService.GetUserProgressAsync();
+
+        _totalLessons = _modules.Sum(m => m.Lessons.Count);
+        _completedLessons = _progress.CompletedLessons.Count(p => p.Value.IsCompleted);
+        _progressPercentage = _totalLessons > 0 ? (double)_completedLessons / _totalLessons * 100 : 0;
+
+        // Check unlock status for each module
+        _moduleUnlocked.Clear();
+        _modulePreviousName.Clear();
+        foreach (var module in _modules)
+        {
+            _moduleUnlocked[module.Id] = await LearningService.IsModuleUnlockedAsync(module.Id);
+            if (!_moduleUnlocked[module.Id])
+            {
+                var prevModule = await LearningService.GetPreviousModuleAsync(module.Id);
+                if (prevModule != null)
+                {
+                    _modulePreviousName[module.Id] = prevModule.Title;
+                }
+            }
+        }
+    }
+
+    private double GetModuleCompletion(LearningModule module)
+    {
+        if (_progress == null || module.Lessons.Count == 0)
+            return 0;
+
+        var completed = module.Lessons.Count(l =>
+            _progress.CompletedLessons.TryGetValue(l.Id, out var p) && p.IsCompleted);
+
+        return (double)completed / module.Lessons.Count * 100;
+    }
+
+    private BadgeVariant GetDifficultyBadge(ModuleDifficulty difficulty) => difficulty switch
+    {
+        ModuleDifficulty.Beginner => BadgeVariant.Success,
+        ModuleDifficulty.Intermediate => BadgeVariant.Warning,
+        ModuleDifficulty.Advanced => BadgeVariant.Danger,
+        _ => BadgeVariant.Default
+    };
+}
